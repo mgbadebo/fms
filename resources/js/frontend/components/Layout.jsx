@@ -26,7 +26,7 @@ export default function Layout({ children }) {
 
     const navigation = [
         { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-        { name: 'Farms', href: '/farms', icon: Farm },
+        { name: 'Farms', href: '/farms', icon: Tractor },
         { name: 'Harvest Lots', href: '/harvest-lots', icon: Package },
         { name: 'Scale Devices', href: '/scale-devices', icon: Scale },
         { name: 'Label Templates', href: '/label-templates', icon: Tag },
