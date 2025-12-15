@@ -75,6 +75,9 @@ class CreateUser extends Command
         $this->line("Name: {$user->name}");
         $this->line("Email: {$user->email}");
 
+        // Ensure roles exist
+        $this->ensureRolesExist();
+
         // Assign role if provided
         if ($role) {
             $roleModel = Role::where('name', strtoupper($role))->first();
@@ -129,6 +132,9 @@ class CreateUser extends Command
             $this->error("User with email {$email} already exists.");
             return 1;
         }
+
+        // Ensure roles exist
+        $this->ensureRolesExist();
 
         // Show available roles
         $roles = Role::pluck('name')->toArray();
@@ -189,6 +195,17 @@ class CreateUser extends Command
         $this->line("  Password: [the password you entered]");
 
         return 0;
+    }
+
+    /**
+     * Ensure all default roles exist.
+     */
+    protected function ensureRolesExist()
+    {
+        $roles = ['OWNER', 'MANAGER', 'WORKER', 'FINANCE', 'AUDITOR', 'ADMIN'];
+        foreach ($roles as $roleName) {
+            Role::firstOrCreate(['name' => $roleName]);
+        }
     }
 }
 

@@ -19,19 +19,42 @@ export default function Dashboard() {
     const fetchDashboardData = async () => {
         try {
             const [farmsRes, harvestLotsRes, scaleDevicesRes] = await Promise.all([
-                api.get('/api/v1/farms'),
-                api.get('/api/v1/harvest-lots?per_page=5'),
-                api.get('/api/v1/scale-devices'),
+                api.get('/api/v1/farms').catch(err => {
+                    console.error('Error fetching farms:', err);
+                    return { data: { data: [] } };
+                }),
+                api.get('/api/v1/harvest-lots?per_page=5').catch(err => {
+                    console.error('Error fetching harvest lots:', err);
+                    return { data: { data: [] } };
+                }),
+                api.get('/api/v1/scale-devices').catch(err => {
+                    console.error('Error fetching scale devices:', err);
+                    return { data: { data: [] } };
+                }),
             ]);
 
+            // Laravel pagination returns: { data: [...], total, per_page, etc }
+            // Direct array returns: [...]
+            // Wrapped returns: { data: { data: [...] } }
+            const farmsData = farmsRes.data?.data || (Array.isArray(farmsRes.data) ? farmsRes.data : []);
+            const harvestData = harvestLotsRes.data?.data || (Array.isArray(harvestLotsRes.data) ? harvestLotsRes.data : []);
+            const scaleData = scaleDevicesRes.data?.data || (Array.isArray(scaleDevicesRes.data) ? scaleDevicesRes.data : []);
+
             setStats({
-                farms: farmsRes.data.total || farmsRes.data.data?.length || 0,
-                harvestLots: harvestLotsRes.data.total || harvestLotsRes.data.data?.length || 0,
-                scaleDevices: scaleDevicesRes.data.total || scaleDevicesRes.data.data?.length || 0,
-                recentHarvests: harvestLotsRes.data.data || [],
+                farms: Array.isArray(farmsData) ? farmsData.length : (farmsRes.data?.total || 0),
+                harvestLots: Array.isArray(harvestData) ? harvestData.length : (harvestLotsRes.data?.total || 0),
+                scaleDevices: Array.isArray(scaleData) ? scaleData.length : (scaleDevicesRes.data?.total || 0),
+                recentHarvests: Array.isArray(harvestData) ? harvestData.slice(0, 5) : [],
             });
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
+            // Set empty stats on error so page still renders
+            setStats({
+                farms: 0,
+                harvestLots: 0,
+                scaleDevices: 0,
+                recentHarvests: [],
+            });
         } finally {
             setLoading(false);
         }
