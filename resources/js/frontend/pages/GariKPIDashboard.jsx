@@ -265,10 +265,14 @@ export default function GariKPIDashboard() {
                                 </div>
                                 <div className="text-right">
                                     <p className="text-sm font-medium text-green-600">
-                                        {batch.conversion_yield_percent?.toFixed(1) || '0'}% yield
+                                        {batch.conversion_yield_percent != null 
+                                            ? Number(batch.conversion_yield_percent).toFixed(1) 
+                                            : '0'}% yield
                                     </p>
                                     <p className="text-xs text-gray-500">
-                                        ₦{batch.cost_per_kg_gari?.toFixed(2) || '0'}/kg
+                                        ₦{batch.cost_per_kg_gari != null 
+                                            ? Number(batch.cost_per_kg_gari).toFixed(2) 
+                                            : '0'}/kg
                                     </p>
                                 </div>
                             </div>

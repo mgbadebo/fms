@@ -175,13 +175,17 @@ export default function GariProductionBatches() {
                                 <div>
                                     <p className="text-xs text-gray-500">Yield</p>
                                     <p className="text-sm font-semibold text-green-600">
-                                        {batch.conversion_yield_percent?.toFixed(1) || 'N/A'}%
+                                        {batch.conversion_yield_percent != null 
+                                            ? Number(batch.conversion_yield_percent).toFixed(1) 
+                                            : 'N/A'}%
                                     </p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-500">Cost per kg</p>
                                     <p className="text-sm font-semibold text-gray-900">
-                                        ₦{batch.cost_per_kg_gari?.toFixed(2) || 'N/A'}
+                                        ₦{batch.cost_per_kg_gari != null 
+                                            ? Number(batch.cost_per_kg_gari).toFixed(2) 
+                                            : 'N/A'}
                                     </p>
                                 </div>
                             </div>

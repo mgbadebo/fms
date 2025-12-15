@@ -103,13 +103,17 @@ export default function GariProductionBatchDetail() {
                         <div>
                             <p className="text-sm text-gray-600 mb-1">Conversion Yield</p>
                             <p className="text-lg font-semibold text-green-600">
-                                {batch.conversion_yield_percent?.toFixed(1) || 'N/A'}%
+                                {batch.conversion_yield_percent != null 
+                                    ? Number(batch.conversion_yield_percent).toFixed(1) 
+                                    : 'N/A'}%
                             </p>
                         </div>
                         <div>
                             <p className="text-sm text-gray-600 mb-1">Cost per kg</p>
                             <p className="text-lg font-semibold text-gray-900">
-                                ₦{batch.cost_per_kg_gari?.toFixed(2) || 'N/A'}
+                                ₦{batch.cost_per_kg_gari != null 
+                                    ? Number(batch.cost_per_kg_gari).toFixed(2) 
+                                    : 'N/A'}
                             </p>
                         </div>
                     </div>
@@ -197,11 +201,13 @@ export default function GariProductionBatchDetail() {
                                 <div className="flex-1 bg-gray-200 rounded-full h-2 mr-2">
                                     <div
                                         className="bg-green-600 h-2 rounded-full"
-                                        style={{ width: `${Math.min(batch.conversion_yield_percent || 0, 100)}%` }}
+                                        style={{ width: `${Math.min(Number(batch.conversion_yield_percent) || 0, 100)}%` }}
                                     ></div>
                                 </div>
                                 <span className="text-sm font-semibold text-gray-900">
-                                    {batch.conversion_yield_percent?.toFixed(1) || '0'}%
+                                    {batch.conversion_yield_percent != null 
+                                        ? Number(batch.conversion_yield_percent).toFixed(1) 
+                                        : '0'}%
                                 </span>
                             </div>
                             <p className="text-xs text-gray-500 mt-1">
@@ -212,14 +218,18 @@ export default function GariProductionBatchDetail() {
                             <div>
                                 <p className="text-sm text-gray-600 mb-1">Waste</p>
                                 <p className="text-sm font-semibold text-gray-900">
-                                    {batch.waste_kg} kg ({batch.waste_percent?.toFixed(1) || '0'}%)
+                                    {batch.waste_kg} kg ({batch.waste_percent != null 
+                                        ? Number(batch.waste_percent).toFixed(1) 
+                                        : '0'}%)
                                 </p>
                             </div>
                         )}
                         <div>
                             <p className="text-sm text-gray-600 mb-1">Cost Efficiency</p>
                             <p className="text-sm font-semibold text-gray-900">
-                                ₦{batch.cost_per_kg_gari?.toFixed(2) || 'N/A'} per kg
+                                ₦{batch.cost_per_kg_gari != null 
+                                    ? Number(batch.cost_per_kg_gari).toFixed(2) 
+                                    : 'N/A'} per kg
                             </p>
                         </div>
                     </div>
