@@ -9,6 +9,13 @@ import HarvestLots from './pages/HarvestLots';
 import HarvestLotDetail from './pages/HarvestLotDetail';
 import ScaleDevices from './pages/ScaleDevices';
 import LabelTemplates from './pages/LabelTemplates';
+import GariProductionBatches from './pages/GariProductionBatches';
+import GariProductionBatchDetail from './pages/GariProductionBatchDetail';
+import GariInventory from './pages/GariInventory';
+import GariSales from './pages/GariSales';
+import GariKPIDashboard from './pages/GariKPIDashboard';
+import PackagingMaterials from './pages/PackagingMaterials';
+import GariWasteLosses from './pages/GariWasteLosses';
 import Layout from './components/Layout';
 
 function PrivateRoute({ children }) {
@@ -46,6 +53,13 @@ function App() {
                                     <Route path="/harvest-lots/:id" element={<HarvestLotDetail />} />
                                     <Route path="/scale-devices" element={<ScaleDevices />} />
                                     <Route path="/label-templates" element={<LabelTemplates />} />
+                                    <Route path="/gari-production-batches" element={<GariProductionBatches />} />
+                                    <Route path="/gari-production-batches/:id" element={<GariProductionBatchDetail />} />
+                                    <Route path="/gari-inventory" element={<GariInventory />} />
+                                    <Route path="/gari-sales" element={<GariSales />} />
+                                    <Route path="/gari-kpis" element={<GariKPIDashboard />} />
+                                    <Route path="/packaging-materials" element={<PackagingMaterials />} />
+                                    <Route path="/gari-waste-losses" element={<GariWasteLosses />} />
                                 </Routes>
                             </Layout>
                         </PrivateRoute>

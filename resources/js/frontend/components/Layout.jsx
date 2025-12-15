@@ -10,6 +10,9 @@ import {
     LogOut,
     Menu,
     X,
+    Factory,
+    ShoppingCart,
+    TrendingUp,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -30,6 +33,11 @@ export default function Layout({ children }) {
         { name: 'Harvest Lots', href: '/harvest-lots', icon: Package },
         { name: 'Scale Devices', href: '/scale-devices', icon: Scale },
         { name: 'Label Templates', href: '/label-templates', icon: Tag },
+        { name: 'Gari Production', href: '/gari-production-batches', icon: Factory },
+        { name: 'Gari Inventory', href: '/gari-inventory', icon: Package },
+        { name: 'Gari Sales', href: '/gari-sales', icon: ShoppingCart },
+        { name: 'Gari KPIs', href: '/gari-kpis', icon: TrendingUp },
+        { name: 'Packaging Materials', href: '/packaging-materials', icon: Package },
     ];
 
     return (
