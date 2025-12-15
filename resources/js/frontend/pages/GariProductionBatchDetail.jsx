@@ -81,7 +81,9 @@ export default function GariProductionBatchDetail() {
                         <div>
                             <p className="text-sm text-gray-600 mb-1">Cassava Input</p>
                             <p className="text-lg font-semibold text-gray-900">
-                                {batch.cassava_quantity_kg} kg
+                                {batch.cassava_quantity_tonnes 
+                                    ? `${batch.cassava_quantity_tonnes} tonnes` 
+                                    : `${(batch.cassava_quantity_kg / 1000).toFixed(3)} tonnes`}
                             </p>
                             {batch.total_cassava_cost && (
                                 <p className="text-xs text-gray-500">

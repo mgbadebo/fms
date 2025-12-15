@@ -40,7 +40,9 @@ class GariProductionBatchController extends Controller
             'farm_id' => 'required|exists:farms,id',
             'processing_date' => 'required|date',
             'cassava_source' => 'required|in:HARVESTED,PURCHASED,MIXED',
-            'cassava_quantity_kg' => 'required|numeric|min:0',
+            'cassava_quantity_tonnes' => 'required_without:cassava_quantity_kg|numeric|min:0',
+            'cassava_quantity_kg' => 'required_without:cassava_quantity_tonnes|numeric|min:0',
+            'cassava_cost_per_tonne' => 'nullable|numeric|min:0',
             'cassava_cost_per_kg' => 'nullable|numeric|min:0',
             'gari_produced_kg' => 'required|numeric|min:0',
             'gari_type' => 'required|in:WHITE,YELLOW',
@@ -58,9 +60,18 @@ class GariProductionBatchController extends Controller
         // Generate batch code
         $validated['batch_code'] = 'GARI-' . strtoupper(Str::random(8));
 
-        // Calculate costs
-        if (isset($validated['cassava_cost_per_kg']) && $validated['cassava_cost_per_kg'] > 0) {
-            $validated['total_cassava_cost'] = $validated['cassava_quantity_kg'] * $validated['cassava_cost_per_kg'];
+        // Handle unit conversion: if tonnes provided, convert to kg for internal calculations
+        if (isset($validated['cassava_quantity_tonnes']) && $validated['cassava_quantity_tonnes'] > 0) {
+            $validated['cassava_quantity_kg'] = $validated['cassava_quantity_tonnes'] * 1000;
+        }
+
+        // Calculate costs - prefer per tonne if provided
+        if (isset($validated['cassava_cost_per_tonne']) && $validated['cassava_cost_per_tonne'] > 0) {
+            $tonnes = $validated['cassava_quantity_tonnes'] ?? ($validated['cassava_quantity_kg'] / 1000);
+            $validated['total_cassava_cost'] = $tonnes * $validated['cassava_cost_per_tonne'];
+        } elseif (isset($validated['cassava_cost_per_kg']) && $validated['cassava_cost_per_kg'] > 0) {
+            $kg = $validated['cassava_quantity_kg'] ?? 0;
+            $validated['total_cassava_cost'] = $kg * $validated['cassava_cost_per_kg'];
         }
 
         $batch = GariProductionBatch::create($validated);
@@ -93,7 +104,9 @@ class GariProductionBatchController extends Controller
         $validated = $request->validate([
             'processing_date' => 'sometimes|date',
             'cassava_source' => 'sometimes|in:HARVESTED,PURCHASED,MIXED',
-            'cassava_quantity_kg' => 'sometimes|numeric|min:0',
+            'cassava_quantity_tonnes' => 'nullable|numeric|min:0',
+            'cassava_quantity_kg' => 'nullable|numeric|min:0',
+            'cassava_cost_per_tonne' => 'nullable|numeric|min:0',
             'cassava_cost_per_kg' => 'nullable|numeric|min:0',
             'gari_produced_kg' => 'sometimes|numeric|min:0',
             'gari_type' => 'sometimes|in:WHITE,YELLOW',
@@ -109,8 +122,16 @@ class GariProductionBatchController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        // Recalculate cassava cost if needed
-        if (isset($validated['cassava_cost_per_kg']) && isset($validated['cassava_quantity_kg'])) {
+        // Handle unit conversion: if tonnes provided, convert to kg for internal calculations
+        if (isset($validated['cassava_quantity_tonnes']) && $validated['cassava_quantity_tonnes'] > 0) {
+            $validated['cassava_quantity_kg'] = $validated['cassava_quantity_tonnes'] * 1000;
+        }
+
+        // Recalculate cassava cost - prefer per tonne if provided
+        if (isset($validated['cassava_cost_per_tonne']) && $validated['cassava_cost_per_tonne'] > 0) {
+            $tonnes = $validated['cassava_quantity_tonnes'] ?? ($validated['cassava_quantity_kg'] ?? 0) / 1000;
+            $validated['total_cassava_cost'] = $tonnes * $validated['cassava_cost_per_tonne'];
+        } elseif (isset($validated['cassava_cost_per_kg']) && isset($validated['cassava_quantity_kg'])) {
             $validated['total_cassava_cost'] = $validated['cassava_quantity_kg'] * $validated['cassava_cost_per_kg'];
         }
 

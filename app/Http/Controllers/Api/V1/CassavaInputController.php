@@ -40,16 +40,27 @@ class CassavaInputController extends Controller
             'supplier_name' => 'required_if:source_type,PURCHASED|nullable|string|max:255',
             'supplier_contact' => 'nullable|string|max:255',
             'purchase_date' => 'required_if:source_type,PURCHASED|nullable|date',
-            'quantity_kg' => 'required|numeric|min:0',
+            'quantity_tonnes' => 'required_without:quantity_kg|numeric|min:0',
+            'quantity_kg' => 'required_without:quantity_tonnes|numeric|min:0',
+            'cost_per_tonne' => 'nullable|numeric|min:0',
             'cost_per_kg' => 'nullable|numeric|min:0',
             'variety' => 'nullable|string|max:255',
             'quality_grade' => 'nullable|in:A,B,C',
             'notes' => 'nullable|string',
         ]);
 
-        // Calculate total cost
-        if (isset($validated['cost_per_kg']) && $validated['cost_per_kg'] > 0) {
-            $validated['total_cost'] = $validated['quantity_kg'] * $validated['cost_per_kg'];
+        // Handle unit conversion: if tonnes provided, convert to kg for internal calculations
+        if (isset($validated['quantity_tonnes']) && $validated['quantity_tonnes'] > 0) {
+            $validated['quantity_kg'] = $validated['quantity_tonnes'] * 1000;
+        }
+
+        // Calculate total cost - prefer per tonne if provided
+        if (isset($validated['cost_per_tonne']) && $validated['cost_per_tonne'] > 0) {
+            $tonnes = $validated['quantity_tonnes'] ?? ($validated['quantity_kg'] / 1000);
+            $validated['total_cost'] = $tonnes * $validated['cost_per_tonne'];
+        } elseif (isset($validated['cost_per_kg']) && $validated['cost_per_kg'] > 0) {
+            $kg = $validated['quantity_kg'] ?? 0;
+            $validated['total_cost'] = $kg * $validated['cost_per_kg'];
         }
 
         $input = CassavaInput::create($validated);
@@ -75,15 +86,25 @@ class CassavaInputController extends Controller
             'supplier_name' => 'nullable|string|max:255',
             'supplier_contact' => 'nullable|string|max:255',
             'purchase_date' => 'nullable|date',
-            'quantity_kg' => 'sometimes|numeric|min:0',
+            'quantity_tonnes' => 'nullable|numeric|min:0',
+            'quantity_kg' => 'nullable|numeric|min:0',
+            'cost_per_tonne' => 'nullable|numeric|min:0',
             'cost_per_kg' => 'nullable|numeric|min:0',
             'variety' => 'nullable|string|max:255',
             'quality_grade' => 'nullable|in:A,B,C',
             'notes' => 'nullable|string',
         ]);
 
-        // Recalculate total cost if needed
-        if (isset($validated['cost_per_kg']) && isset($validated['quantity_kg'])) {
+        // Handle unit conversion: if tonnes provided, convert to kg for internal calculations
+        if (isset($validated['quantity_tonnes']) && $validated['quantity_tonnes'] > 0) {
+            $validated['quantity_kg'] = $validated['quantity_tonnes'] * 1000;
+        }
+
+        // Recalculate total cost - prefer per tonne if provided
+        if (isset($validated['cost_per_tonne']) && $validated['cost_per_tonne'] > 0) {
+            $tonnes = $validated['quantity_tonnes'] ?? ($validated['quantity_kg'] ?? 0) / 1000;
+            $validated['total_cost'] = $tonnes * $validated['cost_per_tonne'];
+        } elseif (isset($validated['cost_per_kg']) && isset($validated['quantity_kg'])) {
             $validated['total_cost'] = $validated['quantity_kg'] * $validated['cost_per_kg'];
         }
 

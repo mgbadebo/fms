@@ -20,7 +20,9 @@ class CassavaInput extends Model
         'supplier_contact',
         'purchase_date',
         'quantity_kg',
+        'quantity_tonnes',
         'cost_per_kg',
+        'cost_per_tonne',
         'total_cost',
         'variety',
         'quality_grade',
@@ -32,7 +34,9 @@ class CassavaInput extends Model
         return [
             'purchase_date' => 'date',
             'quantity_kg' => 'decimal:2',
+            'quantity_tonnes' => 'decimal:3',
             'cost_per_kg' => 'decimal:2',
+            'cost_per_tonne' => 'decimal:2',
             'total_cost' => 'decimal:2',
         ];
     }
@@ -56,6 +60,17 @@ class CassavaInput extends Model
     public function field()
     {
         return $this->belongsTo(Field::class);
+    }
+
+    // Helper method for unit conversion
+    public function getQuantityInKg()
+    {
+        // If tonnes is set, convert to kg (1 tonne = 1000 kg)
+        if ($this->quantity_tonnes) {
+            return $this->quantity_tonnes * 1000;
+        }
+        // Fallback to kg if tonnes not set
+        return $this->quantity_kg ?? 0;
     }
 }
 

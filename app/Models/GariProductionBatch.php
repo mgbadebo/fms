@@ -16,7 +16,9 @@ class GariProductionBatch extends Model
         'processing_date',
         'cassava_source',
         'cassava_quantity_kg',
+        'cassava_quantity_tonnes',
         'cassava_cost_per_kg',
+        'cassava_cost_per_tonne',
         'total_cassava_cost',
         'gari_produced_kg',
         'gari_type',
@@ -42,7 +44,9 @@ class GariProductionBatch extends Model
         return [
             'processing_date' => 'date',
             'cassava_quantity_kg' => 'decimal:2',
+            'cassava_quantity_tonnes' => 'decimal:3',
             'cassava_cost_per_kg' => 'decimal:2',
+            'cassava_cost_per_tonne' => 'decimal:2',
             'total_cassava_cost' => 'decimal:2',
             'gari_produced_kg' => 'decimal:2',
             'conversion_yield_percent' => 'decimal:2',
@@ -81,11 +85,23 @@ class GariProductionBatch extends Model
         return $this->hasMany(GariWasteLoss::class);
     }
 
+    // Helper methods for unit conversion
+    public function getCassavaQuantityInKg()
+    {
+        // If tonnes is set, convert to kg (1 tonne = 1000 kg)
+        if ($this->cassava_quantity_tonnes) {
+            return $this->cassava_quantity_tonnes * 1000;
+        }
+        // Fallback to kg if tonnes not set
+        return $this->cassava_quantity_kg ?? 0;
+    }
+
     // Calculated attributes
     public function calculateYield()
     {
-        if ($this->cassava_quantity_kg > 0) {
-            $this->conversion_yield_percent = ($this->gari_produced_kg / $this->cassava_quantity_kg) * 100;
+        $cassavaKg = $this->getCassavaQuantityInKg();
+        if ($cassavaKg > 0 && $this->gari_produced_kg > 0) {
+            $this->conversion_yield_percent = ($this->gari_produced_kg / $cassavaKg) * 100;
         }
     }
 
@@ -103,8 +119,9 @@ class GariProductionBatch extends Model
 
     public function calculateWaste()
     {
-        if ($this->cassava_quantity_kg > 0) {
-            $this->waste_percent = ($this->waste_kg / $this->cassava_quantity_kg) * 100;
+        $cassavaKg = $this->getCassavaQuantityInKg();
+        if ($cassavaKg > 0 && $this->waste_kg > 0) {
+            $this->waste_percent = ($this->waste_kg / $cassavaKg) * 100;
         }
     }
 }

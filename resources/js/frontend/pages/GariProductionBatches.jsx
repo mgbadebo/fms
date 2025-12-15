@@ -12,8 +12,8 @@ export default function GariProductionBatches() {
         farm_id: '',
         processing_date: new Date().toISOString().slice(0, 10),
         cassava_source: 'HARVESTED',
-        cassava_quantity_kg: '',
-        cassava_cost_per_kg: '',
+        cassava_quantity_tonnes: '',
+        cassava_cost_per_tonne: '',
         gari_produced_kg: '',
         gari_type: 'WHITE',
         gari_grade: 'FINE',
@@ -70,8 +70,8 @@ export default function GariProductionBatches() {
                 farm_id: '',
                 processing_date: new Date().toISOString().slice(0, 10),
                 cassava_source: 'HARVESTED',
-                cassava_quantity_kg: '',
-                cassava_cost_per_kg: '',
+                cassava_quantity_tonnes: '',
+                cassava_cost_per_tonne: '',
                 gari_produced_kg: '',
                 gari_type: 'WHITE',
                 gari_grade: 'FINE',
@@ -154,7 +154,9 @@ export default function GariProductionBatches() {
                                 <div>
                                     <p className="text-xs text-gray-500">Cassava Input</p>
                                     <p className="text-sm font-semibold text-gray-900">
-                                        {batch.cassava_quantity_kg} kg
+                                        {batch.cassava_quantity_tonnes 
+                                            ? `${batch.cassava_quantity_tonnes} tonnes` 
+                                            : `${(batch.cassava_quantity_kg / 1000).toFixed(3)} tonnes`}
                                     </p>
                                     <p className="text-xs text-gray-500">
                                         {batch.cassava_source === 'HARVESTED' ? 'Harvested' : 
@@ -233,24 +235,27 @@ export default function GariProductionBatches() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Cassava Quantity (kg) *</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Cassava Quantity (tonnes) *</label>
                                     <input
                                         type="number"
-                                        step="0.01"
+                                        step="0.001"
                                         required
-                                        value={formData.cassava_quantity_kg}
-                                        onChange={(e) => setFormData({ ...formData, cassava_quantity_kg: e.target.value })}
+                                        value={formData.cassava_quantity_tonnes}
+                                        onChange={(e) => setFormData({ ...formData, cassava_quantity_tonnes: e.target.value })}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                        placeholder="e.g., 1.5"
                                     />
+                                    <p className="text-xs text-gray-500 mt-1">1 tonne = 1,000 kg</p>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Cost per kg (₦)</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Cost per tonne (₦)</label>
                                     <input
                                         type="number"
                                         step="0.01"
-                                        value={formData.cassava_cost_per_kg}
-                                        onChange={(e) => setFormData({ ...formData, cassava_cost_per_kg: e.target.value })}
+                                        value={formData.cassava_cost_per_tonne}
+                                        onChange={(e) => setFormData({ ...formData, cassava_cost_per_tonne: e.target.value })}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                        placeholder="e.g., 150000"
                                     />
                                 </div>
                                 <div>
