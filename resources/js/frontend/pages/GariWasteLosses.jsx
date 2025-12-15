@@ -38,6 +38,21 @@ export default function GariWasteLosses() {
         }
     };
 
+    const fetchFarms = async () => {
+        try {
+            const response = await api.get('/api/v1/farms');
+            setFarms(response.data.data || response.data);
+        } catch (error) {
+            console.error('Error fetching farms:', error);
+        }
+    };
+
+    const handleModalOpen = () => {
+        setShowModal(true);
+        // Refresh farms list when opening modal to get newly created farms
+        fetchFarms();
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -67,7 +82,7 @@ export default function GariWasteLosses() {
                     <p className="mt-2 text-gray-600">Track waste and losses in gari production</p>
                 </div>
                 <button
-                    onClick={() => setShowModal(true)}
+                    onClick={handleModalOpen}
                     className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center"
                 >
                     <Plus className="h-5 w-5 mr-2" />
@@ -87,7 +102,7 @@ export default function GariWasteLosses() {
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No waste/loss records yet</h3>
                     <p className="text-gray-500 mb-4">Record waste and losses to track efficiency</p>
                     <button
-                        onClick={() => setShowModal(true)}
+                        onClick={handleModalOpen}
                         className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
                     >
                         Record Loss
