@@ -1,10 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Http\Request;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Serve React frontend for all routes (SPA)
+Route::get('/{any}', function () {
+    return view('app');
+})->where('any', '^(?!api).*$');
+
+// Keep API routes separate
+// API routes are in routes/api.php
