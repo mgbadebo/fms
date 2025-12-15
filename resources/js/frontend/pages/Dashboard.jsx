@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
-import { Farm, Package, Scale, TrendingUp } from 'lucide-react';
+import { Tractor, Package, Scale, TrendingUp } from 'lucide-react';
 
 export default function Dashboard() {
     const [stats, setStats] = useState({
@@ -49,7 +49,7 @@ export default function Dashboard() {
         {
             name: 'Total Farms',
             value: stats.farms,
-            icon: Farm,
+            icon: Tractor,
             color: 'bg-green-500',
             href: '/farms',
         },

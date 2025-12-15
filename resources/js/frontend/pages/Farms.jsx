@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
-import { Farm, Plus, MapPin, Calendar } from 'lucide-react';
+import { Tractor, Plus, MapPin, Calendar } from 'lucide-react';
 
 export default function Farms() {
     const [farms, setFarms] = useState([]);
@@ -76,7 +76,7 @@ export default function Farms() {
 
             {farms.length === 0 ? (
                 <div className="bg-white rounded-lg shadow p-12 text-center">
-                    <Farm className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                    <Tractor className="h-16 w-16 mx-auto text-gray-400 mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No farms yet</h3>
                     <p className="text-gray-500 mb-4">Get started by creating your first farm</p>
                     <button
@@ -97,7 +97,7 @@ export default function Farms() {
                             <div className="flex items-start justify-between mb-4">
                                 <div className="flex items-center">
                                     <div className="bg-green-100 p-2 rounded-lg">
-                                        <Farm className="h-6 w-6 text-green-600" />
+                                        <Tractor className="h-6 w-6 text-green-600" />
                                     </div>
                                     <h3 className="ml-3 text-lg font-semibold text-gray-900">
                                         {farm.name}

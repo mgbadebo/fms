@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../utils/api';
-import { Farm, MapPin, Calendar, ArrowLeft } from 'lucide-react';
+import { Tractor, MapPin, Calendar, ArrowLeft } from 'lucide-react';
 
 export default function FarmDetail() {
     const { id } = useParams();
@@ -57,7 +57,7 @@ export default function FarmDetail() {
                     <div className="flex items-center justify-between">
                         <div className="flex items-center">
                             <div className="bg-green-100 p-3 rounded-lg">
-                                <Farm className="h-8 w-8 text-green-600" />
+                                <Tractor className="h-8 w-8 text-green-600" />
                             </div>
                             <div className="ml-4">
                                 <h1 className="text-2xl font-bold text-gray-900">{farm.name}</h1>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Farm } from 'lucide-react';
+import { Tractor } from 'lucide-react';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -33,7 +33,7 @@ export default function Login() {
                 <div className="text-center">
                     <div className="flex justify-center">
                         <div className="bg-green-600 p-3 rounded-full">
-                            <Farm className="h-12 w-12 text-white" />
+                            <Tractor className="h-12 w-12 text-white" />
                         </div>
                     </div>
                     <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
