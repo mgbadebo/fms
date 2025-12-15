@@ -32,14 +32,20 @@ class PackagingMaterialController extends Controller
             'name' => 'required|string|max:255',
             'material_type' => 'required|in:POUCH,SACK,LABEL,SEALING_ROLL,CARTON,OTHER',
             'size' => 'nullable|string|max:255',
-            'unit' => 'nullable|string|max:255|default:pieces',
-            'opening_balance' => 'nullable|numeric|min:0|default:0',
-            'quantity_purchased' => 'nullable|numeric|min:0|default:0',
-            'quantity_used' => 'nullable|numeric|min:0|default:0',
+            'unit' => 'nullable|string|max:255',
+            'opening_balance' => 'nullable|numeric|min:0',
+            'quantity_purchased' => 'nullable|numeric|min:0',
+            'quantity_used' => 'nullable|numeric|min:0',
             'cost_per_unit' => 'nullable|numeric|min:0',
             'location_id' => 'nullable|exists:inventory_locations,id',
             'notes' => 'nullable|string',
         ]);
+
+        // Set defaults
+        $validated['unit'] = $validated['unit'] ?? 'pieces';
+        $validated['opening_balance'] = $validated['opening_balance'] ?? 0;
+        $validated['quantity_purchased'] = $validated['quantity_purchased'] ?? 0;
+        $validated['quantity_used'] = $validated['quantity_used'] ?? 0;
 
         // Calculate closing balance and total cost
         $material = new PackagingMaterial($validated);

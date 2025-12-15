@@ -29,10 +29,15 @@ class FieldController extends Controller
             'geometry_reference' => 'nullable|string',
             'geometry' => 'nullable|array',
             'area' => 'nullable|numeric',
-            'area_unit' => 'nullable|string|default:hectares',
+            'area_unit' => 'nullable|string',
             'soil_type' => 'nullable|string',
             'notes' => 'nullable|string',
         ]);
+
+        // Set default area_unit if not provided
+        if (!isset($validated['area_unit'])) {
+            $validated['area_unit'] = 'hectares';
+        }
 
         $field = Field::create($validated);
 

@@ -42,10 +42,15 @@ class CropPlanController extends Controller
             'actual_planting_date' => 'nullable|date',
             'actual_harvest_date' => 'nullable|date',
             'area_planted' => 'nullable|numeric',
-            'area_unit' => 'nullable|string|default:hectares',
+            'area_unit' => 'nullable|string',
             'status' => 'nullable|in:PLANNED,PLANTED,GROWING,HARVESTED,COMPLETED,CANCELLED',
             'notes' => 'nullable|string',
         ]);
+
+        // Set default area_unit if not provided
+        if (!isset($validated['area_unit'])) {
+            $validated['area_unit'] = 'hectares';
+        }
 
         $cropPlan = CropPlan::create($validated);
 

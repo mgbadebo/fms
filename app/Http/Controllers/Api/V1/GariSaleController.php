@@ -53,10 +53,10 @@ class GariSaleController extends Controller
             'quantity_kg' => 'required|numeric|min:0',
             'quantity_units' => 'nullable|integer|min:0',
             'unit_price' => 'required|numeric|min:0',
-            'discount' => 'nullable|numeric|min:0|default:0',
+            'discount' => 'nullable|numeric|min:0',
             'cost_per_kg' => 'nullable|numeric|min:0',
             'payment_method' => 'required|in:CASH,TRANSFER,POS,CHEQUE,CREDIT',
-            'amount_paid' => 'nullable|numeric|min:0|default:0',
+            'amount_paid' => 'nullable|numeric|min:0',
             'sales_channel' => 'nullable|string|max:255',
             'sales_person' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
@@ -65,9 +65,13 @@ class GariSaleController extends Controller
         // Generate sale code
         $validated['sale_code'] = 'SALE-' . strtoupper(Str::random(8));
 
+        // Set defaults
+        $validated['discount'] = $validated['discount'] ?? 0;
+        $validated['amount_paid'] = $validated['amount_paid'] ?? 0;
+
         // Calculate amounts
         $validated['total_amount'] = $validated['quantity_kg'] * $validated['unit_price'];
-        $validated['final_amount'] = $validated['total_amount'] - ($validated['discount'] ?? 0);
+        $validated['final_amount'] = $validated['total_amount'] - $validated['discount'];
 
         $sale = GariSale::create($validated);
         

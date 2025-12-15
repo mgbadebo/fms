@@ -22,9 +22,14 @@ class FarmController extends Controller
             'location' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'total_area' => 'nullable|numeric',
-            'area_unit' => 'nullable|string|default:hectares',
+            'area_unit' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
+
+        // Set default area_unit if not provided
+        if (!isset($validated['area_unit'])) {
+            $validated['area_unit'] = 'hectares';
+        }
 
         $farm = Farm::create($validated);
 

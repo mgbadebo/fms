@@ -33,11 +33,16 @@ class HarvestLotController extends Controller
             'harvested_at' => 'required|date',
             'gross_weight' => 'nullable|numeric',
             'net_weight' => 'nullable|numeric',
-            'weight_unit' => 'nullable|string|default:kg',
+            'weight_unit' => 'nullable|string',
             'quality_grade' => 'nullable|string',
             'storage_location_id' => 'nullable|exists:inventory_locations,id',
             'notes' => 'nullable|string',
         ]);
+
+        // Set default weight_unit if not provided
+        if (!isset($validated['weight_unit'])) {
+            $validated['weight_unit'] = 'kg';
+        }
 
         $harvestLot = HarvestLot::create($validated);
 
