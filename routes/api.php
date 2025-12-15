@@ -12,6 +12,12 @@ use App\Http\Controllers\Api\V1\ZoneController;
 use App\Http\Controllers\Api\V1\CropController;
 use App\Http\Controllers\Api\V1\SeasonController;
 use App\Http\Controllers\Api\V1\CropPlanController;
+use App\Http\Controllers\Api\V1\GariProductionBatchController;
+use App\Http\Controllers\Api\V1\CassavaInputController;
+use App\Http\Controllers\Api\V1\GariInventoryController;
+use App\Http\Controllers\Api\V1\PackagingMaterialController;
+use App\Http\Controllers\Api\V1\GariSaleController;
+use App\Http\Controllers\Api\V1\GariWasteLossController;
 
 Route::prefix('v1')->group(function () {
     // Public authentication routes
@@ -89,6 +95,16 @@ Route::prefix('v1')->group(function () {
         
         // Label Printing
         Route::post('labels/print', [LabelController::class, 'print']);
+        
+        // Gari Production System
+        Route::apiResource('gari-production-batches', GariProductionBatchController::class);
+        Route::apiResource('cassava-inputs', CassavaInputController::class);
+        Route::apiResource('gari-inventory', GariInventoryController::class);
+        Route::get('gari-inventory/summary', [GariInventoryController::class, 'summary']);
+        Route::apiResource('packaging-materials', PackagingMaterialController::class);
+        Route::apiResource('gari-sales', GariSaleController::class);
+        Route::get('gari-sales/summary', [GariSaleController::class, 'summary']);
+        Route::apiResource('gari-waste-losses', GariWasteLossController::class);
     });
 });
 
