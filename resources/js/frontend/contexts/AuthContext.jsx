@@ -19,11 +19,35 @@ export function AuthProvider({ children }) {
 
     const fetchUser = async () => {
         try {
-            // For now, we'll just check if token is valid
-            // You can add a /me endpoint later
-            setUser({ email: localStorage.getItem('user_email') || 'User' });
+            // Check if token exists
+            if (!token) {
+                setLoading(false);
+                return;
+            }
+
+            // Try to get user info from localStorage or create a basic user object
+            const userEmail = localStorage.getItem('user_email');
+            const userName = localStorage.getItem('user_name');
+            
+            if (userEmail) {
+                setUser({ 
+                    email: userEmail,
+                    name: userName || userEmail.split('@')[0],
+                });
+            } else {
+                // If no user info, try to validate token by making a test API call
+                try {
+                    const response = await api.get('/api/v1/farms?per_page=1');
+                    // If successful, token is valid - create basic user object
+                    setUser({ email: 'user@fms.test', name: 'User' });
+                } catch (error) {
+                    // Token invalid, logout
+                    logout();
+                }
+            }
             setLoading(false);
         } catch (error) {
+            console.error('Error fetching user:', error);
             logout();
         }
     };
@@ -36,14 +60,16 @@ export function AuthProvider({ children }) {
             setToken(newToken);
             setUser(userData);
             localStorage.setItem('token', newToken);
-            localStorage.setItem('user_email', userData.email);
+            localStorage.setItem('user_email', userData.email || email);
+            localStorage.setItem('user_name', userData.name || email.split('@')[0]);
             api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
             
             return { success: true };
         } catch (error) {
+            console.error('Login error:', error);
             return {
                 success: false,
-                message: error.response?.data?.message || 'Login failed',
+                message: error.response?.data?.message || error.message || 'Login failed',
             };
         }
     };
