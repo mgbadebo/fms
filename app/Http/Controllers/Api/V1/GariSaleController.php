@@ -374,8 +374,19 @@ class GariSaleController extends Controller
             $query->where('sale_date', '<=', $request->date_to);
         }
 
-        // Get overall summary (not grouped)
-        $overallSummary = $query->selectRaw('
+        // Get overall summary (not grouped) - use a fresh query
+        $overallQuery = GariSale::query();
+        if ($request->has('farm_id')) {
+            $overallQuery->where('farm_id', $request->farm_id);
+        }
+        if ($request->has('date_from')) {
+            $overallQuery->where('sale_date', '>=', $request->date_from);
+        }
+        if ($request->has('date_to')) {
+            $overallQuery->where('sale_date', '<=', $request->date_to);
+        }
+        
+        $overallSummary = $overallQuery->selectRaw('
             SUM(quantity_kg) as total_kg_sold,
             SUM(final_amount) as total_revenue,
             SUM(total_cost) as total_cost,
@@ -383,9 +394,19 @@ class GariSaleController extends Controller
             COUNT(*) as total_sales
         ')->first();
 
-        // Calculate weighted average price per kg
-        $salesForAvg = clone $query;
-        $salesForAvg = $salesForAvg->select('quantity_kg', 'unit_price')->get();
+        // Calculate weighted average price per kg - use a fresh query
+        $avgQuery = GariSale::query();
+        if ($request->has('farm_id')) {
+            $avgQuery->where('farm_id', $request->farm_id);
+        }
+        if ($request->has('date_from')) {
+            $avgQuery->where('sale_date', '>=', $request->date_from);
+        }
+        if ($request->has('date_to')) {
+            $avgQuery->where('sale_date', '<=', $request->date_to);
+        }
+        
+        $salesForAvg = $avgQuery->select('quantity_kg', 'unit_price')->get();
         $totalWeightedPrice = 0;
         $totalQuantity = 0;
         foreach ($salesForAvg as $sale) {
@@ -398,7 +419,7 @@ class GariSaleController extends Controller
         }
         $avgPricePerKg = $totalQuantity > 0 ? $totalWeightedPrice / $totalQuantity : 0;
 
-        // Get grouped summary (by customer_type and packaging_type)
+        // Get grouped summary (by customer_type and packaging_type) - use original query
         $groupedSummary = $query->selectRaw('
             customer_type,
             packaging_type,
