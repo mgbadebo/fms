@@ -5,6 +5,7 @@ import { Package, Plus, Filter } from 'lucide-react';
 export default function GariInventory() {
     const [inventory, setInventory] = useState([]);
     const [summary, setSummary] = useState([]);
+    const [totalStockFromSummary, setTotalStockFromSummary] = useState(0);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
         gari_type: '',
@@ -29,6 +30,7 @@ export default function GariInventory() {
             ]);
             setInventory(inventoryRes.data.data || inventoryRes.data);
             setSummary(summaryRes.data.data || summaryRes.data);
+            setTotalStockFromSummary(summaryRes.data.totalStock || 0);
         } catch (error) {
             console.error('Error fetching inventory:', error);
         } finally {
@@ -60,7 +62,7 @@ export default function GariInventory() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div className="bg-white rounded-lg shadow p-6">
                     <p className="text-sm text-gray-600 mb-1">Total Stock</p>
-                    <p className="text-2xl font-bold text-gray-900">{totalStock.toFixed(2)} kg</p>
+                    <p className="text-2xl font-bold text-gray-900">{totalStockFromSummary > 0 ? totalStockFromSummary.toFixed(2) : totalStock.toFixed(2)} kg</p>
                 </div>
                 <div className="bg-white rounded-lg shadow p-6">
                     <p className="text-sm text-gray-600 mb-1">Total Value</p>

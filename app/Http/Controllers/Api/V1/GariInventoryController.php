@@ -29,8 +29,111 @@ class GariInventoryController extends Controller
             $query->where('status', $request->status);
         }
 
-        $inventory = $query->orderBy('production_date', 'desc')->paginate(20);
-        return response()->json($inventory);
+        $inventory = $query->orderBy('production_date', 'desc')->get();
+        
+        // Also include completed batches that don't have inventory records
+        $batchQuery = \App\Models\GariProductionBatch::where('status', 'COMPLETED')
+            ->where('gari_produced_kg', '>', 0)
+            ->with('farm');
+            
+        if ($request->has('farm_id')) {
+            $batchQuery->where('farm_id', $request->farm_id);
+        }
+        
+        $batches = $batchQuery->get();
+        
+        // Get batch IDs that already have inventory
+        $batchesWithInventory = $inventory->pluck('gari_production_batch_id')->filter()->unique();
+        
+        // Get sold quantities for batches
+        $batchIds = $batches->pluck('id');
+        $soldQuantities = \App\Models\GariSale::whereIn('gari_production_batch_id', $batchIds)
+            ->selectRaw('gari_production_batch_id, SUM(quantity_kg) as sold_kg')
+            ->groupBy('gari_production_batch_id')
+            ->pluck('sold_kg', 'gari_production_batch_id');
+        
+        // Get inventory quantities per batch
+        $inventoryQuantities = GariInventory::whereIn('gari_production_batch_id', $batchIds)
+            ->where('status', 'IN_STOCK')
+            ->selectRaw('gari_production_batch_id, SUM(quantity_kg) as inventory_kg')
+            ->groupBy('gari_production_batch_id')
+            ->pluck('inventory_kg', 'gari_production_batch_id');
+        
+        // Create inventory items for batches without inventory records
+        foreach ($batches as $batch) {
+            if ($batchesWithInventory->contains($batch->id)) {
+                continue; // Skip batches that already have inventory records
+            }
+            
+            $soldKg = (float)($soldQuantities[$batch->id] ?? 0);
+            $inventoryKg = (float)($inventoryQuantities[$batch->id] ?? 0);
+            $availableKg = $batch->gari_produced_kg - $soldKg - $inventoryKg;
+            
+            if ($availableKg > 0) {
+                // Create a virtual inventory item from the batch
+                $virtualInventory = new GariInventory([
+                    'id' => null, // Virtual item, no database ID
+                    'farm_id' => $batch->farm_id,
+                    'gari_production_batch_id' => $batch->id,
+                    'gari_type' => $batch->gari_type,
+                    'gari_grade' => $batch->gari_grade,
+                    'packaging_type' => 'BULK',
+                    'quantity_kg' => $availableKg,
+                    'quantity_units' => 0,
+                    'cost_per_kg' => $batch->cost_per_kg_gari,
+                    'total_cost' => $availableKg * ($batch->cost_per_kg_gari ?? 0),
+                    'status' => 'IN_STOCK',
+                    'production_date' => $batch->processing_date,
+                    'expiry_date' => null,
+                    'notes' => 'Auto-generated from production batch',
+                ]);
+                
+                // Set relationships
+                $virtualInventory->setRelation('farm', $batch->farm);
+                $virtualInventory->setRelation('gariProductionBatch', $batch);
+                $virtualInventory->setRelation('location', null);
+                
+                $inventory->push($virtualInventory);
+            }
+        }
+        
+        // Apply filters to combined results
+        if ($request->has('gari_type')) {
+            $inventory = $inventory->filter(function($item) use ($request) {
+                return $item->gari_type === $request->gari_type;
+            });
+        }
+        
+        if ($request->has('packaging_type')) {
+            $inventory = $inventory->filter(function($item) use ($request) {
+                return $item->packaging_type === $request->packaging_type;
+            });
+        }
+        
+        if ($request->has('status')) {
+            $inventory = $inventory->filter(function($item) use ($request) {
+                return $item->status === $request->status;
+            });
+        }
+        
+        // Sort by production date
+        $inventory = $inventory->sortByDesc(function($item) {
+            return $item->production_date ?? $item->created_at;
+        })->values();
+        
+        // Paginate manually
+        $page = $request->input('page', 1);
+        $perPage = 20;
+        $total = $inventory->count();
+        $items = $inventory->slice(($page - 1) * $perPage, $perPage)->values();
+        
+        return response()->json([
+            'data' => $items,
+            'current_page' => (int)$page,
+            'per_page' => $perPage,
+            'total' => $total,
+            'last_page' => ceil($total / $perPage),
+        ]);
     }
 
     public function store(Request $request): JsonResponse
@@ -107,13 +210,15 @@ class GariInventoryController extends Controller
     // Get inventory summary by type and packaging
     public function summary(Request $request): JsonResponse
     {
-        $query = GariInventory::where('status', 'IN_STOCK');
-
-        if ($request->has('farm_id')) {
-            $query->where('farm_id', $request->farm_id);
+        $farmId = $request->input('farm_id');
+        
+        // Get inventory from gari_inventory table
+        $inventoryQuery = GariInventory::where('status', 'IN_STOCK');
+        if ($farmId) {
+            $inventoryQuery->where('farm_id', $farmId);
         }
-
-        $summary = $query->selectRaw('
+        
+        $inventorySummary = $inventoryQuery->selectRaw('
             gari_type,
             gari_grade,
             packaging_type,
@@ -123,8 +228,76 @@ class GariInventoryController extends Controller
         ')
         ->groupBy('gari_type', 'gari_grade', 'packaging_type')
         ->get();
-
-        return response()->json(['data' => $summary]);
+        
+        // Also get completed production batches
+        $batchesQuery = \App\Models\GariProductionBatch::where('status', 'COMPLETED')
+            ->where('gari_produced_kg', '>', 0);
+        if ($farmId) {
+            $batchesQuery->where('farm_id', $farmId);
+        }
+        
+        $batches = $batchesQuery->get();
+        
+        // Calculate sold and inventory quantities per batch
+        $batchIds = $batches->pluck('id');
+        $soldQuantities = \App\Models\GariSale::whereIn('gari_production_batch_id', $batchIds)
+            ->selectRaw('gari_production_batch_id, SUM(quantity_kg) as sold_kg')
+            ->groupBy('gari_production_batch_id')
+            ->pluck('sold_kg', 'gari_production_batch_id');
+        
+        $inventoryQuantities = GariInventory::whereIn('gari_production_batch_id', $batchIds)
+            ->where('status', 'IN_STOCK')
+            ->selectRaw('gari_production_batch_id, SUM(quantity_kg) as inventory_kg')
+            ->groupBy('gari_production_batch_id')
+            ->pluck('inventory_kg', 'gari_production_batch_id');
+        
+        // Create summary map
+        $summaryMap = [];
+        
+        // Add inventory items
+        foreach ($inventorySummary as $item) {
+            $key = $item->gari_type . '_' . $item->gari_grade . '_' . $item->packaging_type;
+            $summaryMap[$key] = [
+                'gari_type' => $item->gari_type,
+                'gari_grade' => $item->gari_grade,
+                'packaging_type' => $item->packaging_type,
+                'total_kg' => (float)$item->total_kg,
+                'total_units' => (int)$item->total_units,
+                'total_cost_value' => (float)$item->total_cost_value,
+            ];
+        }
+        
+        // Add batches without inventory records
+        foreach ($batches as $batch) {
+            $soldKg = (float)($soldQuantities[$batch->id] ?? 0);
+            $inventoryKg = (float)($inventoryQuantities[$batch->id] ?? 0);
+            $availableKg = $batch->gari_produced_kg - $soldKg - $inventoryKg;
+            
+            if ($availableKg > 0) {
+                $key = $batch->gari_type . '_' . $batch->gari_grade . '_BULK';
+                
+                if (!isset($summaryMap[$key])) {
+                    $summaryMap[$key] = [
+                        'gari_type' => $batch->gari_type,
+                        'gari_grade' => $batch->gari_grade,
+                        'packaging_type' => 'BULK',
+                        'total_kg' => 0,
+                        'total_units' => 0,
+                        'total_cost_value' => 0,
+                    ];
+                }
+                
+                $summaryMap[$key]['total_kg'] += $availableKg;
+                $summaryMap[$key]['total_cost_value'] += $availableKg * ($batch->cost_per_kg_gari ?? 0);
+            }
+        }
+        
+        $totalStock = array_sum(array_column($summaryMap, 'total_kg'));
+        
+        return response()->json([
+            'data' => array_values($summaryMap),
+            'totalStock' => $totalStock
+        ]);
     }
 }
 
