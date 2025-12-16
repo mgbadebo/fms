@@ -47,8 +47,9 @@ class GariSaleController extends Controller
             'farm_id' => 'required|exists:farms,id',
         ]);
 
-        // Get all production batches for the farm that have gari produced (regardless of status)
+        // Get all production batches for the farm that are completed and have gari produced
         $productionBatches = GariProductionBatch::where('farm_id', $request->farm_id)
+            ->where('status', 'COMPLETED')
             ->where('gari_produced_kg', '>', 0)
             ->orderBy('processing_date', 'asc') // FIFO: oldest first
             ->orderBy('created_at', 'asc')
