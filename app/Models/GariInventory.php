@@ -10,6 +10,8 @@ class GariInventory extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'gari_inventory';
+
     protected $fillable = [
         'farm_id',
         'gari_production_batch_id',

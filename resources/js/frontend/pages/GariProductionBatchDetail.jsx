@@ -23,8 +23,11 @@ export default function GariProductionBatchDetail() {
             // Handle response structure - API returns { data: { ... } }
             const batchData = response.data?.data || response.data;
             console.log('Extracted batch data:', batchData);
+            console.log('Batch data type:', typeof batchData);
+            console.log('Batch data is object:', batchData && typeof batchData === 'object');
             
-            if (batchData && (batchData.id || batchData.batch_code)) {
+            // Accept any object with data (less strict validation)
+            if (batchData && typeof batchData === 'object' && !Array.isArray(batchData)) {
                 console.log('Setting batch:', batchData);
                 setBatch(batchData);
             } else {

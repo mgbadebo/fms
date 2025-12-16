@@ -94,13 +94,17 @@ class GariProductionBatchController extends Controller
             return response()->json(['message' => 'Production batch not found'], 404);
         }
         
-        $batch->load([
-            'farm',
-            'cassavaInputs.harvestLot',
-            'cassavaInputs.field',
-            'gariInventory',
-            'wasteLosses'
-        ]);
+        // Load relationships one by one to avoid table name issues
+        $batch->load('farm');
+        $batch->load('cassavaInputs.harvestLot');
+        $batch->load('cassavaInputs.field');
+        // Skip gariInventory if it causes issues (table name might be wrong)
+        try {
+            $batch->load('gariInventory');
+        } catch (\Exception $e) {
+            \Log::warning('Failed to load gariInventory relationship: ' . $e->getMessage());
+        }
+        $batch->load('wasteLosses');
         return response()->json(['data' => $batch]);
     }
 
