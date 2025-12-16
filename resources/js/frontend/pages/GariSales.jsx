@@ -7,6 +7,7 @@ export default function GariSales() {
     const [summary, setSummary] = useState([]);
     const [farms, setFarms] = useState([]);
     const [availableBatches, setAvailableBatches] = useState([]);
+    const [loadingBatches, setLoadingBatches] = useState(false);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({
@@ -89,9 +90,11 @@ export default function GariSales() {
     const fetchAvailableBatches = async () => {
         if (!formData.farm_id || !formData.gari_type || !formData.gari_grade || !formData.packaging_type) {
             setAvailableBatches([]);
+            setLoadingBatches(false);
             return;
         }
 
+        setLoadingBatches(true);
         try {
             const params = new URLSearchParams({
                 farm_id: formData.farm_id,
@@ -106,15 +109,24 @@ export default function GariSales() {
             // Auto-select the first batch (FIFO - oldest first)
             if (batches.length > 0 && !formData.gari_production_batch_id) {
                 const firstBatch = batches[0];
-                setFormData({
-                    ...formData,
+                setFormData(prev => ({
+                    ...prev,
                     gari_production_batch_id: firstBatch.batch_id,
-                    cost_per_kg: firstBatch.cost_per_kg || formData.cost_per_kg,
-                });
+                    cost_per_kg: firstBatch.cost_per_kg || prev.cost_per_kg,
+                }));
+            } else if (batches.length === 0) {
+                // Clear selection if no batches available
+                setFormData(prev => ({
+                    ...prev,
+                    gari_production_batch_id: '',
+                }));
             }
         } catch (error) {
             console.error('Error fetching available batches:', error);
             setAvailableBatches([]);
+            alert('Error loading available batches: ' + (error.response?.data?.message || 'Unknown error'));
+        } finally {
+            setLoadingBatches(false);
         }
     };
 
@@ -352,38 +364,45 @@ export default function GariSales() {
                                 </div>
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Production Batch (FIFO) *</label>
-                                    {availableBatches.length > 0 ? (
-                                        <select
-                                            required
-                                            value={formData.gari_production_batch_id}
-                                            onChange={(e) => {
-                                                const selectedBatch = availableBatches.find(b => b.batch_id == e.target.value);
-                                                setFormData({
-                                                    ...formData,
-                                                    gari_production_batch_id: e.target.value,
-                                                    cost_per_kg: selectedBatch?.cost_per_kg || formData.cost_per_kg,
-                                                });
-                                            }}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
-                                        >
-                                            <option value="">Select batch (oldest first - FIFO)</option>
-                                            {availableBatches.map((batch) => (
-                                                <option key={batch.batch_id} value={batch.batch_id}>
-                                                    {batch.batch_code} - {batch.available_kg.toFixed(2)} kg available
-                                                    {batch.production_date && ` (${new Date(batch.production_date).toLocaleDateString()})`}
-                                                    {batch.cost_per_kg && ` - ₦${Number(batch.cost_per_kg).toFixed(2)}/kg`}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    ) : (
-                                        <div className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 text-sm">
-                                            {formData.farm_id && formData.gari_type && formData.gari_grade && formData.packaging_type
-                                                ? 'No inventory available for this product combination'
-                                                : 'Select farm, gari type, grade, and packaging to see available batches'}
-                                        </div>
-                                    )}
+                                    <select
+                                        required
+                                        disabled={!formData.farm_id || !formData.gari_type || !formData.gari_grade || !formData.packaging_type || loadingBatches}
+                                        value={formData.gari_production_batch_id}
+                                        onChange={(e) => {
+                                            const selectedBatch = availableBatches.find(b => b.batch_id == e.target.value);
+                                            setFormData({
+                                                ...formData,
+                                                gari_production_batch_id: e.target.value,
+                                                cost_per_kg: selectedBatch?.cost_per_kg || formData.cost_per_kg,
+                                            });
+                                        }}
+                                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 ${
+                                            (!formData.farm_id || !formData.gari_type || !formData.gari_grade || !formData.packaging_type || loadingBatches)
+                                                ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                                                : 'bg-white'
+                                        }`}
+                                    >
+                                        <option value="">
+                                            {loadingBatches 
+                                                ? 'Loading batches...' 
+                                                : !formData.farm_id || !formData.gari_type || !formData.gari_grade || !formData.packaging_type
+                                                    ? 'Select farm, gari type, grade, and packaging first'
+                                                    : availableBatches.length === 0
+                                                        ? 'No inventory available for this product combination'
+                                                        : 'Select batch (oldest first - FIFO)'}
+                                        </option>
+                                        {availableBatches.map((batch) => (
+                                            <option key={batch.batch_id} value={batch.batch_id}>
+                                                {batch.batch_code} - {Number(batch.available_kg || 0).toFixed(2)} kg available
+                                                {batch.production_date && ` (${new Date(batch.production_date).toLocaleDateString()})`}
+                                                {batch.cost_per_kg && ` - ₦${Number(batch.cost_per_kg).toFixed(2)}/kg`}
+                                            </option>
+                                        ))}
+                                    </select>
                                     <p className="text-xs text-gray-500 mt-1">
-                                        Batches are sorted by production date (FIFO - First In, First Out)
+                                        {loadingBatches 
+                                            ? 'Loading available batches...' 
+                                            : 'Batches are sorted by production date (FIFO - First In, First Out)'}
                                     </p>
                                 </div>
                                 <div>
