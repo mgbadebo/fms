@@ -77,7 +77,7 @@ class GariProductionBatch extends Model
 
     public function gariInventory()
     {
-        return $this->hasMany(GariInventory::class);
+        return $this->hasMany(GariInventory::class, 'gari_production_batch_id');
     }
 
     public function wasteLosses()
