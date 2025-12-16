@@ -120,6 +120,13 @@ class GariProductionBatchController extends Controller
             return response()->json(['message' => 'Production batch not found'], 404);
         }
 
+        // Prevent editing completed batches
+        if ($batch->status === 'COMPLETED') {
+            return response()->json([
+                'message' => 'Cannot edit a completed production batch'
+            ], 422);
+        }
+
         $validated = $request->validate([
             'processing_date' => 'sometimes|date',
             'cassava_source' => 'sometimes|in:HARVESTED,PURCHASED,MIXED',

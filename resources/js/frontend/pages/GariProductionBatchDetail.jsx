@@ -121,13 +121,15 @@ export default function GariProductionBatchDetail() {
                     <ArrowLeft className="h-5 w-5 mr-2" />
                     Back to Batches
                 </Link>
-                <button
-                    onClick={handleEditClick}
-                    className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                >
-                    <Edit className="h-5 w-5 mr-2" />
-                    Edit Batch
-                </button>
+                {batch.status !== 'COMPLETED' && (
+                    <button
+                        onClick={handleEditClick}
+                        className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    >
+                        <Edit className="h-5 w-5 mr-2" />
+                        Edit Batch
+                    </button>
+                )}
             </div>
 
             {/* Batch Header */}
