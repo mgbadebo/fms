@@ -301,14 +301,21 @@ class GariSaleController extends Controller
         // Recalculate amounts if needed
         if (isset($validated['quantity_kg']) && isset($validated['unit_price'])) {
             $validated['total_amount'] = $validated['quantity_kg'] * $validated['unit_price'];
-            $validated['final_amount'] = $validated['total_amount'] - ($validated['discount'] ?? 0);
+            $validated['final_amount'] = $validated['total_amount'] - ($validated['discount'] ?? $sale->discount ?? 0);
+        } elseif (isset($validated['discount'])) {
+            // If only discount changed, recalculate final amount
+            $totalAmount = $sale->quantity_kg * ($validated['unit_price'] ?? $sale->unit_price);
+            $validated['total_amount'] = $totalAmount;
+            $validated['final_amount'] = $totalAmount - $validated['discount'];
         }
 
         $sale->update($validated);
         
-        // Recalculate margins and payment
+        // Recalculate margins and payment (always recalculate payment status when amount_paid changes)
+        if (isset($validated['amount_paid']) || isset($validated['payment_status'])) {
+            $sale->calculatePayment();
+        }
         $sale->calculateMargins();
-        $sale->calculatePayment();
         $sale->save();
 
         return response()->json(['data' => $sale->load('farm', 'customer')]);

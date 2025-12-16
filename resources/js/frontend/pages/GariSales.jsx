@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
-import { ShoppingCart, Plus, TrendingUp, DollarSign } from 'lucide-react';
+import { ShoppingCart, Plus, TrendingUp, DollarSign, Edit } from 'lucide-react';
 
 export default function GariSales() {
     const [sales, setSales] = useState([]);
@@ -10,6 +10,8 @@ export default function GariSales() {
     const [loadingBatches, setLoadingBatches] = useState(false);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [editingSale, setEditingSale] = useState(null);
+    const [editFormData, setEditFormData] = useState(null);
     const [formData, setFormData] = useState({
         farm_id: '',
         gari_production_batch_id: '',
@@ -204,6 +206,48 @@ export default function GariSales() {
         }
     };
 
+    const handleEditClick = (sale) => {
+        setEditingSale(sale);
+        setEditFormData({
+            payment_status: sale.payment_status || 'PAID',
+            payment_method: sale.payment_method || 'CASH',
+            amount_paid: sale.amount_paid || 0,
+            discount: sale.discount || 0,
+            unit_price: sale.unit_price || 0,
+            notes: sale.notes || '',
+        });
+    };
+
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await api.put(`/api/v1/gari-sales/${editingSale.id}`, editFormData);
+            setEditingSale(null);
+            setEditFormData(null);
+            fetchData();
+        } catch (error) {
+            alert('Error updating sale: ' + (error.response?.data?.message || 'Unknown error'));
+        }
+    };
+
+    const handleAmountPaidChange = (amountPaid) => {
+        const finalAmount = Number(editingSale?.final_amount || 0);
+        const paid = Number(amountPaid || 0);
+        let paymentStatus = 'OUTSTANDING';
+        
+        if (paid >= finalAmount) {
+            paymentStatus = 'PAID';
+        } else if (paid > 0) {
+            paymentStatus = 'PARTIAL';
+        }
+        
+        setEditFormData({
+            ...editFormData,
+            amount_paid: amountPaid,
+            payment_status: paymentStatus,
+        });
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -274,6 +318,7 @@ export default function GariSales() {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Margin</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -312,6 +357,15 @@ export default function GariSales() {
                                             }`}>
                                                 {sale.payment_status}
                                             </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                            <button
+                                                onClick={() => handleEditClick(sale)}
+                                                className="text-green-600 hover:text-green-700 flex items-center"
+                                            >
+                                                <Edit className="h-4 w-4 mr-1" />
+                                                Edit
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
@@ -585,6 +639,132 @@ export default function GariSales() {
                                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                                 >
                                     Create Sale
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Sale Modal */}
+            {editingSale && editFormData && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+                    <div className="bg-white rounded-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+                        <h2 className="text-xl font-bold mb-4">Edit Sale - {editingSale.sale_code}</h2>
+                        <form onSubmit={handleEditSubmit} className="space-y-4">
+                            <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span className="text-gray-600">Customer:</span>
+                                        <span className="ml-2 font-medium">{editingSale.customer_name || 'Walk-in'}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Product:</span>
+                                        <span className="ml-2 font-medium">{editingSale.gari_type} • {editingSale.packaging_type?.replace('_', ' ')}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Quantity:</span>
+                                        <span className="ml-2 font-medium">{editingSale.quantity_kg} kg</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Total Amount:</span>
+                                        <span className="ml-2 font-medium">₦{Number(editingSale.final_amount || 0).toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Payment Status *</label>
+                                    <select
+                                        required
+                                        value={editFormData.payment_status}
+                                        onChange={(e) => setEditFormData({ ...editFormData, payment_status: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                    >
+                                        <option value="PAID">Paid</option>
+                                        <option value="PARTIAL">Partial</option>
+                                        <option value="OUTSTANDING">Outstanding</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method *</label>
+                                    <select
+                                        required
+                                        value={editFormData.payment_method}
+                                        onChange={(e) => setEditFormData({ ...editFormData, payment_method: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                    >
+                                        <option value="CASH">Cash</option>
+                                        <option value="TRANSFER">Transfer</option>
+                                        <option value="POS">POS</option>
+                                        <option value="CHEQUE">Cheque</option>
+                                        <option value="CREDIT">Credit</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount Paid (₦) *</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        max={Number(editingSale.final_amount || 0)}
+                                        required
+                                        value={editFormData.amount_paid}
+                                        onChange={(e) => handleAmountPaidChange(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Outstanding: ₦{Number(Number(editingSale.final_amount || 0) - Number(editFormData.amount_paid || 0)).toFixed(2)}
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Discount (₦)</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={editFormData.discount}
+                                        onChange={(e) => setEditFormData({ ...editFormData, discount: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price (₦)</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={editFormData.unit_price}
+                                        onChange={(e) => setEditFormData({ ...editFormData, unit_price: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                                    <textarea
+                                        value={editFormData.notes}
+                                        onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                                        rows={3}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end space-x-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setEditingSale(null);
+                                        setEditFormData(null);
+                                    }}
+                                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                >
+                                    Update Sale
                                 </button>
                             </div>
                         </form>
