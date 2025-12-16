@@ -85,21 +85,21 @@ class GariProductionBatchController extends Controller
         return response()->json(['data' => $batch->load('farm', 'cassavaInputs')], 201);
     }
 
-    public function show(string $id): JsonResponse
+    public function show(GariProductionBatch $gariProductionBatch): JsonResponse
     {
-        $batch = GariProductionBatch::with([
+        $batch = $gariProductionBatch->load([
             'farm',
             'cassavaInputs.harvestLot',
             'cassavaInputs.field',
             'gariInventory',
             'wasteLosses'
-        ])->findOrFail($id);
+        ]);
         return response()->json(['data' => $batch]);
     }
 
-    public function update(Request $request, string $id): JsonResponse
+    public function update(Request $request, GariProductionBatch $gariProductionBatch): JsonResponse
     {
-        $batch = GariProductionBatch::findOrFail($id);
+        $batch = $gariProductionBatch;
 
         $validated = $request->validate([
             'processing_date' => 'sometimes|date',
@@ -146,10 +146,9 @@ class GariProductionBatchController extends Controller
         return response()->json(['data' => $batch->load('farm', 'cassavaInputs')]);
     }
 
-    public function destroy(string $id): JsonResponse
+    public function destroy(GariProductionBatch $gariProductionBatch): JsonResponse
     {
-        $batch = GariProductionBatch::findOrFail($id);
-        $batch->delete();
+        $gariProductionBatch->delete();
 
         return response()->json(null, 204);
     }

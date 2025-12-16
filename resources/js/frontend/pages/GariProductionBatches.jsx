@@ -37,8 +37,14 @@ export default function GariProductionBatches() {
                 api.get('/api/v1/gari-production-batches'),
                 api.get('/api/v1/farms'),
             ]);
-            setBatches(batchesRes.data.data || batchesRes.data);
-            setFarms(farmsRes.data.data || farmsRes.data);
+            // Handle paginated response - Laravel pagination returns { data: [...], current_page, etc }
+            const batchesData = batchesRes.data;
+            const batchesArray = batchesData?.data || (Array.isArray(batchesData) ? batchesData : []);
+            setBatches(batchesArray);
+            
+            const farmsData = farmsRes.data;
+            const farmsArray = farmsData?.data || (Array.isArray(farmsData) ? farmsData : []);
+            setFarms(farmsArray);
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -64,7 +70,8 @@ export default function GariProductionBatches() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await api.post('/api/v1/gari-production-batches', formData);
+            const response = await api.post('/api/v1/gari-production-batches', formData);
+            console.log('Created batch response:', response.data);
             setShowModal(false);
             setFormData({
                 farm_id: '',
