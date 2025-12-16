@@ -221,11 +221,14 @@ export default function GariSales() {
     const handleEditSubmit = async (e) => {
         e.preventDefault();
         try {
-            await api.put(`/api/v1/gari-sales/${editingSale.id}`, editFormData);
+            console.log('Updating sale with data:', editFormData);
+            const response = await api.put(`/api/v1/gari-sales/${editingSale.id}`, editFormData);
+            console.log('Update response:', response.data);
             setEditingSale(null);
             setEditFormData(null);
             fetchData();
         } catch (error) {
+            console.error('Error updating sale:', error);
             alert('Error updating sale: ' + (error.response?.data?.message || 'Unknown error'));
         }
     };

@@ -26,16 +26,36 @@ export default function GariKPIDashboard() {
                 date_to: dateRange.to,
             });
 
+            // Fetch all sales (without pagination limit for accurate KPIs)
+            const salesParams = new URLSearchParams({
+                date_from: dateRange.from,
+                date_to: dateRange.to,
+                per_page: '1000', // Get more sales for accurate calculations
+            });
+
             const [batchesRes, inventoryRes, salesRes, summaryRes] = await Promise.all([
                 api.get(`/api/v1/gari-production-batches?${params.toString()}`),
                 api.get('/api/v1/gari-inventory?status=IN_STOCK'),
-                api.get(`/api/v1/gari-sales?${params.toString()}`),
+                api.get(`/api/v1/gari-sales?${salesParams.toString()}`),
                 api.get(`/api/v1/gari-sales/summary?${params.toString()}`),
             ]);
 
-            const batches = batchesRes.data.data || batchesRes.data;
-            const inventory = inventoryRes.data.data || inventoryRes.data;
-            const sales = salesRes.data.data || salesRes.data;
+            // Handle paginated responses
+            const batches = Array.isArray(batchesRes.data.data) ? batchesRes.data.data : 
+                           Array.isArray(batchesRes.data) ? batchesRes.data : [];
+            const inventory = Array.isArray(inventoryRes.data.data) ? inventoryRes.data.data : 
+                             Array.isArray(inventoryRes.data) ? inventoryRes.data : [];
+            
+            // Handle paginated sales response
+            let sales = [];
+            if (salesRes.data.data && Array.isArray(salesRes.data.data)) {
+                sales = salesRes.data.data;
+            } else if (Array.isArray(salesRes.data)) {
+                sales = salesRes.data;
+            }
+            
+            // Use overall summary from API if available, otherwise calculate from sales array
+            const overallSummary = summaryRes.data.overall || {};
             const summary = summaryRes.data.data || summaryRes.data;
 
             // Calculate KPIs - ensure all values are numbers
@@ -45,12 +65,32 @@ export default function GariKPIDashboard() {
             const avgCostPerKg = batches.length > 0 
                 ? batches.reduce((sum, b) => sum + (Number(b.cost_per_kg_gari) || 0), 0) / batches.length 
                 : 0;
-            const totalRevenue = sales.reduce((sum, s) => sum + (Number(s.final_amount) || 0), 0);
-            const totalMargin = sales.reduce((sum, s) => sum + (Number(s.gross_margin) || 0), 0);
+            
+            // Use overall summary from API (more accurate as it includes all sales, not just paginated)
+            // Fallback to calculating from sales array if overall summary not available
+            const totalRevenue = overallSummary.total_revenue ?? 
+                               sales.reduce((sum, s) => sum + (Number(s.final_amount) || 0), 0);
+            const totalMargin = overallSummary.total_margin ?? 
+                              sales.reduce((sum, s) => sum + (Number(s.gross_margin) || 0), 0);
+            const totalSalesVolumeKg = overallSummary.total_kg_sold ?? 
+                                     sales.reduce((sum, s) => sum + (Number(s.quantity_kg) || 0), 0);
+            const avgPricePerKg = overallSummary.avg_price_per_kg ?? 
+                                (() => {
+                                    // Calculate weighted average price per kg (weighted by quantity)
+                                    let totalPriceWeighted = 0;
+                                    let totalQuantityForPrice = 0;
+                                    sales.forEach(s => {
+                                        const qty = Number(s.quantity_kg) || 0;
+                                        const price = Number(s.unit_price) || 0;
+                                        if (qty > 0 && price > 0) {
+                                            totalPriceWeighted += price * qty;
+                                            totalQuantityForPrice += qty;
+                                        }
+                                    });
+                                    return totalQuantityForPrice > 0 ? totalPriceWeighted / totalQuantityForPrice : 0;
+                                })();
+            
             const totalStock = inventory.reduce((sum, i) => sum + (Number(i.quantity_kg) || 0), 0);
-            const avgPricePerKg = sales.length > 0
-                ? sales.reduce((sum, s) => sum + (Number(s.unit_price) || 0), 0) / sales.length
-                : 0;
 
             setKpis({
                 batches,
@@ -65,8 +105,9 @@ export default function GariKPIDashboard() {
                     totalMargin,
                     totalStock,
                     avgPricePerKg,
+                    totalSalesVolumeKg,
                     totalBatches: batches.length,
-                    totalSales: sales.length,
+                    totalSales: overallSummary.total_sales ?? sales.length,
                 },
             });
         } catch (error) {
@@ -162,9 +203,9 @@ export default function GariKPIDashboard() {
                         <TrendingUp className="h-5 w-5 text-green-600" />
                     </div>
                     <p className="text-3xl font-bold text-gray-900">
-                        {kpis.sales.length}
+                        {Number(summary.totalSalesVolumeKg || 0).toFixed(2)} kg
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">Total sales in period</p>
+                    <p className="text-xs text-gray-500 mt-1">Total kg sold in period</p>
                 </div>
 
                 <div className="bg-white rounded-lg shadow p-6">

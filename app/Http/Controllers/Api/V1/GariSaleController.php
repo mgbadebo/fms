@@ -374,7 +374,32 @@ class GariSaleController extends Controller
             $query->where('sale_date', '<=', $request->date_to);
         }
 
-        $summary = $query->selectRaw('
+        // Get overall summary (not grouped)
+        $overallSummary = $query->selectRaw('
+            SUM(quantity_kg) as total_kg_sold,
+            SUM(final_amount) as total_revenue,
+            SUM(total_cost) as total_cost,
+            SUM(gross_margin) as total_margin,
+            COUNT(*) as total_sales
+        ')->first();
+
+        // Calculate weighted average price per kg
+        $salesForAvg = clone $query;
+        $salesForAvg = $salesForAvg->select('quantity_kg', 'unit_price')->get();
+        $totalWeightedPrice = 0;
+        $totalQuantity = 0;
+        foreach ($salesForAvg as $sale) {
+            $qty = (float)($sale->quantity_kg ?? 0);
+            $price = (float)($sale->unit_price ?? 0);
+            if ($qty > 0 && $price > 0) {
+                $totalWeightedPrice += $price * $qty;
+                $totalQuantity += $qty;
+            }
+        }
+        $avgPricePerKg = $totalQuantity > 0 ? $totalWeightedPrice / $totalQuantity : 0;
+
+        // Get grouped summary (by customer_type and packaging_type)
+        $groupedSummary = $query->selectRaw('
             customer_type,
             packaging_type,
             SUM(quantity_kg) as total_kg_sold,
@@ -387,7 +412,17 @@ class GariSaleController extends Controller
         ->groupBy('customer_type', 'packaging_type')
         ->get();
 
-        return response()->json(['data' => $summary]);
+        return response()->json([
+            'data' => $groupedSummary,
+            'overall' => [
+                'total_kg_sold' => (float)($overallSummary->total_kg_sold ?? 0),
+                'total_revenue' => (float)($overallSummary->total_revenue ?? 0),
+                'total_cost' => (float)($overallSummary->total_cost ?? 0),
+                'total_margin' => (float)($overallSummary->total_margin ?? 0),
+                'total_sales' => (int)($overallSummary->total_sales ?? 0),
+                'avg_price_per_kg' => (float)$avgPricePerKg,
+            ],
+        ]);
     }
 }
 
