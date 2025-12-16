@@ -88,7 +88,7 @@ export default function GariSales() {
     };
 
     const fetchAvailableBatches = async () => {
-        if (!formData.farm_id || !formData.gari_type || !formData.gari_grade || !formData.packaging_type) {
+        if (!formData.farm_id) {
             setAvailableBatches([]);
             setLoadingBatches(false);
             return;
@@ -98,27 +98,24 @@ export default function GariSales() {
         try {
             const params = new URLSearchParams({
                 farm_id: formData.farm_id,
-                gari_type: formData.gari_type,
-                gari_grade: formData.gari_grade,
-                packaging_type: formData.packaging_type,
             });
             const response = await api.get(`/api/v1/gari-sales/available-batches?${params.toString()}`);
             const batches = response.data.data || [];
             setAvailableBatches(batches);
             
-            // Auto-select the first batch (FIFO - oldest first)
+            // Auto-select the first batch (FIFO - oldest first) if none selected
             if (batches.length > 0 && !formData.gari_production_batch_id) {
                 const firstBatch = batches[0];
-                setFormData(prev => ({
-                    ...prev,
-                    gari_production_batch_id: firstBatch.batch_id,
-                    cost_per_kg: firstBatch.cost_per_kg || prev.cost_per_kg,
-                }));
+                handleBatchSelection(firstBatch.batch_id);
             } else if (batches.length === 0) {
                 // Clear selection if no batches available
                 setFormData(prev => ({
                     ...prev,
                     gari_production_batch_id: '',
+                    gari_type: 'WHITE',
+                    gari_grade: 'FINE',
+                    packaging_type: '1KG_POUCH',
+                    cost_per_kg: '',
                 }));
             }
         } catch (error) {
@@ -130,12 +127,31 @@ export default function GariSales() {
         }
     };
 
-    // Fetch batches when product details change
+    const handleBatchSelection = (batchId) => {
+        const selectedBatch = availableBatches.find(b => b.batch_id == batchId);
+        if (selectedBatch) {
+            // Auto-fill fields from batch
+            const defaultPackaging = selectedBatch.packaging_options && selectedBatch.packaging_options.length > 0
+                ? selectedBatch.packaging_options[0].packaging_type
+                : '1KG_POUCH';
+            
+            setFormData(prev => ({
+                ...prev,
+                gari_production_batch_id: batchId,
+                gari_type: selectedBatch.gari_type || prev.gari_type,
+                gari_grade: selectedBatch.gari_grade || prev.gari_grade,
+                packaging_type: defaultPackaging,
+                cost_per_kg: selectedBatch.cost_per_kg_gari || prev.cost_per_kg,
+            }));
+        }
+    };
+
+    // Fetch batches when farm changes
     useEffect(() => {
-        if (showModal && formData.farm_id && formData.gari_type && formData.gari_grade && formData.packaging_type) {
+        if (showModal && formData.farm_id) {
             fetchAvailableBatches();
         }
-    }, [showModal, formData.farm_id, formData.gari_type, formData.gari_grade, formData.packaging_type]);
+    }, [showModal, formData.farm_id]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -322,62 +338,15 @@ export default function GariSales() {
                                         <option value="OTHER">Other</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Gari Type *</label>
-                                    <select
-                                        required
-                                        value={formData.gari_type}
-                                        onChange={(e) => setFormData({ ...formData, gari_type: e.target.value, gari_production_batch_id: '' })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
-                                    >
-                                        <option value="WHITE">White</option>
-                                        <option value="YELLOW">Yellow</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Gari Grade *</label>
-                                    <select
-                                        required
-                                        value={formData.gari_grade}
-                                        onChange={(e) => setFormData({ ...formData, gari_grade: e.target.value, gari_production_batch_id: '' })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
-                                    >
-                                        <option value="FINE">Fine</option>
-                                        <option value="COARSE">Coarse</option>
-                                        <option value="MIXED">Mixed</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Packaging *</label>
-                                    <select
-                                        required
-                                        value={formData.packaging_type}
-                                        onChange={(e) => setFormData({ ...formData, packaging_type: e.target.value, gari_production_batch_id: '' })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
-                                    >
-                                        <option value="1KG_POUCH">1kg Pouch</option>
-                                        <option value="2KG_POUCH">2kg Pouch</option>
-                                        <option value="5KG_PACK">5kg Pack</option>
-                                        <option value="50KG_BAG">50kg Bag</option>
-                                        <option value="BULK">Bulk</option>
-                                    </select>
-                                </div>
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Production Batch (FIFO) *</label>
                                     <select
                                         required
-                                        disabled={!formData.farm_id || !formData.gari_type || !formData.gari_grade || !formData.packaging_type || loadingBatches}
+                                        disabled={!formData.farm_id || loadingBatches}
                                         value={formData.gari_production_batch_id}
-                                        onChange={(e) => {
-                                            const selectedBatch = availableBatches.find(b => b.batch_id == e.target.value);
-                                            setFormData({
-                                                ...formData,
-                                                gari_production_batch_id: e.target.value,
-                                                cost_per_kg: selectedBatch?.cost_per_kg || formData.cost_per_kg,
-                                            });
-                                        }}
+                                        onChange={(e) => handleBatchSelection(e.target.value)}
                                         className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 ${
-                                            (!formData.farm_id || !formData.gari_type || !formData.gari_grade || !formData.packaging_type || loadingBatches)
+                                            (!formData.farm_id || loadingBatches)
                                                 ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
                                                 : 'bg-white'
                                         }`}
@@ -385,24 +354,92 @@ export default function GariSales() {
                                         <option value="">
                                             {loadingBatches 
                                                 ? 'Loading batches...' 
-                                                : !formData.farm_id || !formData.gari_type || !formData.gari_grade || !formData.packaging_type
-                                                    ? 'Select farm, gari type, grade, and packaging first'
+                                                : !formData.farm_id
+                                                    ? 'Select farm first'
                                                     : availableBatches.length === 0
-                                                        ? 'No inventory available for this product combination'
+                                                        ? 'No inventory available for this farm'
                                                         : 'Select batch (oldest first - FIFO)'}
                                         </option>
                                         {availableBatches.map((batch) => (
                                             <option key={batch.batch_id} value={batch.batch_id}>
-                                                {batch.batch_code} - {Number(batch.available_kg || 0).toFixed(2)} kg available
-                                                {batch.production_date && ` (${new Date(batch.production_date).toLocaleDateString()})`}
-                                                {batch.cost_per_kg && ` - ₦${Number(batch.cost_per_kg).toFixed(2)}/kg`}
+                                                {batch.batch_code} - {Number(batch.total_available_kg || 0).toFixed(2)} kg available
+                                                {batch.processing_date && ` (${new Date(batch.processing_date).toLocaleDateString()})`}
+                                                {batch.gari_type && ` - ${batch.gari_type}`}
+                                                {batch.gari_grade && ` ${batch.gari_grade}`}
+                                                {batch.cost_per_kg_gari && ` - ₦${Number(batch.cost_per_kg_gari).toFixed(2)}/kg`}
                                             </option>
                                         ))}
                                     </select>
                                     <p className="text-xs text-gray-500 mt-1">
                                         {loadingBatches 
                                             ? 'Loading available batches...' 
-                                            : 'Batches are sorted by production date (FIFO - First In, First Out)'}
+                                            : 'Batches are sorted by production date (FIFO - First In, First Out). Selecting a batch will auto-fill product details.'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Gari Type *</label>
+                                    <select
+                                        required
+                                        disabled={!formData.gari_production_batch_id}
+                                        value={formData.gari_type}
+                                        onChange={(e) => setFormData({ ...formData, gari_type: e.target.value })}
+                                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 ${
+                                            !formData.gari_production_batch_id ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'
+                                        }`}
+                                    >
+                                        <option value="WHITE">White</option>
+                                        <option value="YELLOW">Yellow</option>
+                                    </select>
+                                    <p className="text-xs text-gray-500 mt-1">Auto-filled from selected batch</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Gari Grade *</label>
+                                    <select
+                                        required
+                                        disabled={!formData.gari_production_batch_id}
+                                        value={formData.gari_grade}
+                                        onChange={(e) => setFormData({ ...formData, gari_grade: e.target.value })}
+                                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 ${
+                                            !formData.gari_production_batch_id ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'
+                                        }`}
+                                    >
+                                        <option value="FINE">Fine</option>
+                                        <option value="COARSE">Coarse</option>
+                                        <option value="MIXED">Mixed</option>
+                                    </select>
+                                    <p className="text-xs text-gray-500 mt-1">Auto-filled from selected batch</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Packaging *</label>
+                                    <select
+                                        required
+                                        disabled={!formData.gari_production_batch_id}
+                                        value={formData.packaging_type}
+                                        onChange={(e) => setFormData({ ...formData, packaging_type: e.target.value })}
+                                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 ${
+                                            !formData.gari_production_batch_id ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'
+                                        }`}
+                                    >
+                                        {formData.gari_production_batch_id && availableBatches.find(b => b.batch_id == formData.gari_production_batch_id)?.packaging_options?.length > 0 ? (
+                                            availableBatches.find(b => b.batch_id == formData.gari_production_batch_id).packaging_options.map((pkg) => (
+                                                <option key={pkg.packaging_type} value={pkg.packaging_type}>
+                                                    {pkg.packaging_type.replace('_', ' ')} - {Number(pkg.available_kg || 0).toFixed(2)} kg available
+                                                </option>
+                                            ))
+                                        ) : (
+                                            <>
+                                                <option value="1KG_POUCH">1kg Pouch</option>
+                                                <option value="2KG_POUCH">2kg Pouch</option>
+                                                <option value="5KG_PACK">5kg Pack</option>
+                                                <option value="50KG_BAG">50kg Bag</option>
+                                                <option value="BULK">Bulk</option>
+                                            </>
+                                        )}
+                                    </select>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        {formData.gari_production_batch_id 
+                                            ? 'Available packaging options for selected batch' 
+                                            : 'Select a batch first'}
                                     </p>
                                 </div>
                                 <div>

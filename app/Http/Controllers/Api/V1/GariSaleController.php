@@ -40,21 +40,15 @@ class GariSaleController extends Controller
         return response()->json($sales);
     }
 
-    // Get available inventory batches for FIFO selection
+    // Get available inventory batches for FIFO selection (by farm only)
     public function getAvailableBatches(Request $request): JsonResponse
     {
         $request->validate([
             'farm_id' => 'required|exists:farms,id',
-            'gari_type' => 'required|in:WHITE,YELLOW',
-            'gari_grade' => 'required|in:FINE,COARSE,MIXED',
-            'packaging_type' => 'required|in:1KG_POUCH,2KG_POUCH,5KG_PACK,50KG_BAG,BULK',
         ]);
 
-        // Get inventory items matching the criteria, ordered by production date (FIFO)
+        // Get all inventory items for the farm with available stock, ordered by production date (FIFO)
         $inventory = GariInventory::where('farm_id', $request->farm_id)
-            ->where('gari_type', $request->gari_type)
-            ->where('gari_grade', $request->gari_grade)
-            ->where('packaging_type', $request->packaging_type)
             ->where('status', 'IN_STOCK')
             ->where('quantity_kg', '>', 0)
             ->with('gariProductionBatch')
@@ -62,36 +56,61 @@ class GariSaleController extends Controller
             ->orderBy('created_at', 'asc') // Secondary sort for same date
             ->get();
 
-        // Group by batch and calculate available quantity
+        // Group by batch and collect all inventory details
         $batches = [];
         foreach ($inventory as $item) {
             $batchId = $item->gari_production_batch_id;
-            if (!$batchId) continue;
+            if (!$batchId || !$item->gariProductionBatch) continue;
+
+            $batch = $item->gariProductionBatch;
 
             if (!isset($batches[$batchId])) {
                 $batches[$batchId] = [
                     'batch_id' => $batchId,
-                    'batch_code' => $item->gariProductionBatch->batch_code ?? 'N/A',
-                    'production_date' => $item->production_date ?? $item->gariProductionBatch->processing_date ?? null,
-                    'available_kg' => 0,
-                    'cost_per_kg' => $item->cost_per_kg,
+                    'batch_code' => $batch->batch_code ?? 'N/A',
+                    'processing_date' => $batch->processing_date,
+                    'gari_type' => $batch->gari_type,
+                    'gari_grade' => $batch->gari_grade,
+                    'cost_per_kg_gari' => $batch->cost_per_kg_gari,
+                    'total_available_kg' => 0,
+                    'packaging_options' => [], // Group by packaging type
                     'inventory_items' => [],
                 ];
             }
 
-            $batches[$batchId]['available_kg'] += $item->quantity_kg;
+            // Add to total available
+            $batches[$batchId]['total_available_kg'] += $item->quantity_kg;
+
+            // Group by packaging type
+            $packagingType = $item->packaging_type;
+            if (!isset($batches[$batchId]['packaging_options'][$packagingType])) {
+                $batches[$batchId]['packaging_options'][$packagingType] = [
+                    'packaging_type' => $packagingType,
+                    'available_kg' => 0,
+                    'cost_per_kg' => $item->cost_per_kg,
+                ];
+            }
+            $batches[$batchId]['packaging_options'][$packagingType]['available_kg'] += $item->quantity_kg;
+
+            // Store inventory items
             $batches[$batchId]['inventory_items'][] = [
                 'id' => $item->id,
+                'packaging_type' => $item->packaging_type,
                 'quantity_kg' => $item->quantity_kg,
                 'cost_per_kg' => $item->cost_per_kg,
             ];
         }
 
-        // Convert to array and sort by production date (FIFO)
-        $batchesArray = array_values($batches);
+        // Convert packaging_options to arrays and sort batches by production date (FIFO)
+        $batchesArray = [];
+        foreach ($batches as $batchId => $batch) {
+            $batch['packaging_options'] = array_values($batch['packaging_options']);
+            $batchesArray[] = $batch;
+        }
+
         usort($batchesArray, function($a, $b) {
-            $dateA = $a['production_date'] ? strtotime($a['production_date']) : 0;
-            $dateB = $b['production_date'] ? strtotime($b['production_date']) : 0;
+            $dateA = $a['processing_date'] ? strtotime($a['processing_date']) : 0;
+            $dateB = $b['processing_date'] ? strtotime($b['processing_date']) : 0;
             return $dateA <=> $dateB;
         });
 
