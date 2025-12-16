@@ -433,14 +433,21 @@ class GariSaleController extends Controller
         ->groupBy('customer_type', 'packaging_type')
         ->get();
 
+        // Ensure we handle null values properly (SUM returns null when no rows)
+        $totalKgSold = $overallSummary && $overallSummary->total_kg_sold !== null ? (float)$overallSummary->total_kg_sold : 0;
+        $totalRevenue = $overallSummary && $overallSummary->total_revenue !== null ? (float)$overallSummary->total_revenue : 0;
+        $totalCost = $overallSummary && $overallSummary->total_cost !== null ? (float)$overallSummary->total_cost : 0;
+        $totalMargin = $overallSummary && $overallSummary->total_margin !== null ? (float)$overallSummary->total_margin : 0;
+        $totalSales = $overallSummary && $overallSummary->total_sales !== null ? (int)$overallSummary->total_sales : 0;
+        
         return response()->json([
             'data' => $groupedSummary,
             'overall' => [
-                'total_kg_sold' => (float)($overallSummary->total_kg_sold ?? 0),
-                'total_revenue' => (float)($overallSummary->total_revenue ?? 0),
-                'total_cost' => (float)($overallSummary->total_cost ?? 0),
-                'total_margin' => (float)($overallSummary->total_margin ?? 0),
-                'total_sales' => (int)($overallSummary->total_sales ?? 0),
+                'total_kg_sold' => $totalKgSold,
+                'total_revenue' => $totalRevenue,
+                'total_cost' => $totalCost,
+                'total_margin' => $totalMargin,
+                'total_sales' => $totalSales,
                 'avg_price_per_kg' => (float)$avgPricePerKg,
             ],
         ]);

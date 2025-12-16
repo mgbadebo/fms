@@ -56,10 +56,13 @@ export default function GariKPIDashboard() {
             
             // Use overall summary from API if available, otherwise calculate from sales array
             console.log('Summary API Response:', summaryRes.data);
+            console.log('Date Range:', dateRange);
+            console.log('Sales Response:', salesRes.data);
             const overallSummary = summaryRes.data.overall || {};
             const summary = summaryRes.data.data || summaryRes.data;
             console.log('Overall Summary:', overallSummary);
             console.log('Sales array length:', sales.length);
+            console.log('Sample sale (first):', sales[0]);
 
             // Calculate KPIs - ensure all values are numbers
             const totalCassava = batches.reduce((sum, b) => sum + (Number(b.cassava_quantity_kg) || 0), 0);
