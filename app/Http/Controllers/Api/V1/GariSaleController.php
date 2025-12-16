@@ -292,6 +292,7 @@ class GariSaleController extends Controller
             'discount' => 'nullable|numeric|min:0',
             'cost_per_kg' => 'nullable|numeric|min:0',
             'payment_method' => 'sometimes|in:CASH,TRANSFER,POS,CHEQUE,CREDIT',
+            'payment_status' => 'sometimes|in:PAID,PARTIAL,OUTSTANDING',
             'amount_paid' => 'nullable|numeric|min:0',
             'sales_channel' => 'nullable|string|max:255',
             'sales_person' => 'nullable|string|max:255',
@@ -311,10 +312,16 @@ class GariSaleController extends Controller
 
         $sale->update($validated);
         
-        // Recalculate margins and payment (always recalculate payment status when amount_paid changes)
-        if (isset($validated['amount_paid']) || isset($validated['payment_status'])) {
+        // Recalculate payment status if amount_paid changed (overrides manual payment_status if provided)
+        if (isset($validated['amount_paid'])) {
             $sale->calculatePayment();
         }
+        // If payment_status was explicitly set but amount_paid wasn't changed, use the provided status
+        // But also ensure amount_outstanding is calculated correctly
+        if (isset($validated['payment_status']) && !isset($validated['amount_paid'])) {
+            $sale->amount_outstanding = $sale->final_amount - $sale->amount_paid;
+        }
+        
         $sale->calculateMargins();
         $sale->save();
 
