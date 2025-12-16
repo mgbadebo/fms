@@ -102,9 +102,10 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('gari-inventory', GariInventoryController::class);
         Route::get('gari-inventory/summary', [GariInventoryController::class, 'summary']);
         Route::apiResource('packaging-materials', PackagingMaterialController::class);
-        Route::apiResource('gari-sales', GariSaleController::class);
+        // Gari Sales - custom routes must come before apiResource to avoid route conflicts
         Route::get('gari-sales/summary', [GariSaleController::class, 'summary']);
         Route::get('gari-sales/available-batches', [GariSaleController::class, 'getAvailableBatches']);
+        Route::apiResource('gari-sales', GariSaleController::class);
         Route::apiResource('gari-waste-losses', GariWasteLossController::class);
     });
 });
