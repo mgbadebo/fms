@@ -118,14 +118,52 @@ class GariInventoryController extends Controller
         
         // Sort by production date
         $inventory = $inventory->sortByDesc(function($item) {
-            return $item->production_date ?? $item->created_at;
+            if ($item->production_date) {
+                return is_string($item->production_date) 
+                    ? strtotime($item->production_date) 
+                    : $item->production_date->timestamp;
+            }
+            if ($item->created_at) {
+                return is_string($item->created_at) 
+                    ? strtotime($item->created_at) 
+                    : $item->created_at->timestamp;
+            }
+            return 0;
         })->values();
+        
+        // Convert collection to array for JSON serialization
+        $inventoryArray = $inventory->map(function($item) {
+            return [
+                'id' => $item->id,
+                'farm_id' => $item->farm_id,
+                'gari_production_batch_id' => $item->gari_production_batch_id,
+                'gari_type' => $item->gari_type,
+                'gari_grade' => $item->gari_grade,
+                'packaging_type' => $item->packaging_type,
+                'quantity_kg' => (float)$item->quantity_kg,
+                'quantity_units' => (int)($item->quantity_units ?? 0),
+                'cost_per_kg' => $item->cost_per_kg ? (float)$item->cost_per_kg : null,
+                'total_cost' => $item->total_cost ? (float)$item->total_cost : 0,
+                'status' => $item->status,
+                'production_date' => $item->production_date ? $item->production_date->format('Y-m-d') : null,
+                'expiry_date' => $item->expiry_date ? $item->expiry_date->format('Y-m-d') : null,
+                'notes' => $item->notes,
+                'farm' => $item->farm ? [
+                    'id' => $item->farm->id,
+                    'name' => $item->farm->name,
+                ] : null,
+                'gari_production_batch' => $item->gariProductionBatch ? [
+                    'id' => $item->gariProductionBatch->id,
+                    'batch_code' => $item->gariProductionBatch->batch_code,
+                ] : null,
+            ];
+        })->toArray();
         
         // Paginate manually
         $page = $request->input('page', 1);
         $perPage = 20;
-        $total = $inventory->count();
-        $items = $inventory->slice(($page - 1) * $perPage, $perPage)->values();
+        $total = count($inventoryArray);
+        $items = array_slice($inventoryArray, ($page - 1) * $perPage, $perPage);
         
         return response()->json([
             'data' => $items,

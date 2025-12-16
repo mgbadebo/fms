@@ -28,9 +28,17 @@ export default function GariInventory() {
                 api.get(`/api/v1/gari-inventory?${params.toString()}`),
                 api.get('/api/v1/gari-inventory/summary'),
             ]);
-            setInventory(inventoryRes.data.data || inventoryRes.data);
+            
+            // Handle paginated response
+            const inventoryData = inventoryRes.data.data || inventoryRes.data;
+            const inventoryArray = Array.isArray(inventoryData) ? inventoryData : [];
+            
+            setInventory(inventoryArray);
             setSummary(summaryRes.data.data || summaryRes.data);
             setTotalStockFromSummary(summaryRes.data.totalStock || 0);
+            
+            console.log('Inventory response:', inventoryRes.data);
+            console.log('Inventory items:', inventoryArray);
         } catch (error) {
             console.error('Error fetching inventory:', error);
         } finally {
