@@ -85,6 +85,7 @@ export default function GariSales() {
             notes: '',
         });
         setAvailableBatches([]);
+        setAvailableBatches([]);
     };
 
     const fetchAvailableBatches = async () => {
@@ -142,8 +143,47 @@ export default function GariSales() {
                 gari_grade: selectedBatch.gari_grade || prev.gari_grade,
                 packaging_type: defaultPackaging,
                 cost_per_kg: selectedBatch.cost_per_kg_gari || prev.cost_per_kg,
+                quantity_units: '',
+                quantity_kg: '',
             }));
         }
+    };
+
+    // Calculate kg from packaging type and quantity
+    const calculateKgFromPackaging = (packagingType, quantityUnits) => {
+        if (!packagingType || !quantityUnits || quantityUnits <= 0) return 0;
+        
+        const packagingWeights = {
+            '1KG_POUCH': 1,
+            '2KG_POUCH': 2,
+            '5KG_PACK': 5,
+            '50KG_BAG': 50,
+        };
+        
+        const weightPerUnit = packagingWeights[packagingType] || 0;
+        return weightPerUnit * quantityUnits;
+    };
+
+    const handlePackagingChange = (packagingType) => {
+        setFormData(prev => {
+            const newKg = calculateKgFromPackaging(packagingType, prev.quantity_units || 0);
+            return {
+                ...prev,
+                packaging_type: packagingType,
+                quantity_kg: newKg,
+            };
+        });
+    };
+
+    const handleQuantityUnitsChange = (quantityUnits) => {
+        setFormData(prev => {
+            const newKg = calculateKgFromPackaging(prev.packaging_type, quantityUnits || 0);
+            return {
+                ...prev,
+                quantity_units: quantityUnits,
+                quantity_kg: newKg,
+            };
+        });
     };
 
     // Fetch batches when farm changes
@@ -415,43 +455,54 @@ export default function GariSales() {
                                         required
                                         disabled={!formData.gari_production_batch_id}
                                         value={formData.packaging_type}
-                                        onChange={(e) => setFormData({ ...formData, packaging_type: e.target.value })}
+                                        onChange={(e) => handlePackagingChange(e.target.value)}
                                         className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 ${
                                             !formData.gari_production_batch_id ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'
                                         }`}
                                     >
-                                        {formData.gari_production_batch_id && availableBatches.find(b => b.batch_id == formData.gari_production_batch_id)?.packaging_options?.length > 0 ? (
-                                            availableBatches.find(b => b.batch_id == formData.gari_production_batch_id).packaging_options.map((pkg) => (
-                                                <option key={pkg.packaging_type} value={pkg.packaging_type}>
-                                                    {pkg.packaging_type.replace('_', ' ')} - {Number(pkg.available_kg || 0).toFixed(2)} kg available
-                                                </option>
-                                            ))
-                                        ) : (
-                                            <>
-                                                <option value="1KG_POUCH">1kg Pouch</option>
-                                                <option value="2KG_POUCH">2kg Pouch</option>
-                                                <option value="5KG_PACK">5kg Pack</option>
-                                                <option value="50KG_BAG">50kg Bag</option>
-                                                <option value="BULK">Bulk</option>
-                                            </>
-                                        )}
+                                        <option value="1KG_POUCH">1kg Pouch</option>
+                                        <option value="2KG_POUCH">2kg Pouch</option>
+                                        <option value="5KG_PACK">5kg Pack</option>
+                                        <option value="50KG_BAG">50kg Bag</option>
                                     </select>
                                     <p className="text-xs text-gray-500 mt-1">
                                         {formData.gari_production_batch_id 
-                                            ? 'Available packaging options for selected batch' 
+                                            ? 'Select packaging size' 
                                             : 'Select a batch first'}
                                     </p>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Quantity (kg) *</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Quantity (units) *</label>
+                                    <input
+                                        type="number"
+                                        step="1"
+                                        min="1"
+                                        required
+                                        disabled={!formData.packaging_type}
+                                        value={formData.quantity_units}
+                                        onChange={(e) => handleQuantityUnitsChange(e.target.value)}
+                                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 ${
+                                            !formData.packaging_type ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'
+                                        }`}
+                                        placeholder="Enter number of units"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Number of {formData.packaging_type?.replace('_', ' ').toLowerCase() || 'units'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Total Quantity (kg) *</label>
                                     <input
                                         type="number"
                                         step="0.01"
                                         required
-                                        value={formData.quantity_kg}
-                                        onChange={(e) => setFormData({ ...formData, quantity_kg: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                        readOnly
+                                        value={formData.quantity_kg || 0}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
                                     />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Auto-calculated from packaging and quantity
+                                    </p>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price (₦) *</label>

@@ -220,6 +220,7 @@ class GariSaleController extends Controller
             }
         } elseif (isset($validated['gari_production_batch_id'])) {
             // If no specific inventory item, reduce from oldest matching inventory (FIFO)
+            // Try to find matching packaging first, then fall back to any packaging
             $inventory = GariInventory::where('gari_production_batch_id', $validated['gari_production_batch_id'])
                 ->where('gari_type', $validated['gari_type'])
                 ->where('gari_grade', $validated['gari_grade'])
@@ -229,6 +230,18 @@ class GariSaleController extends Controller
                 ->orderBy('production_date', 'asc')
                 ->orderBy('created_at', 'asc')
                 ->first();
+
+            // If no matching packaging, try to find any inventory for this batch
+            if (!$inventory) {
+                $inventory = GariInventory::where('gari_production_batch_id', $validated['gari_production_batch_id'])
+                    ->where('gari_type', $validated['gari_type'])
+                    ->where('gari_grade', $validated['gari_grade'])
+                    ->where('status', 'IN_STOCK')
+                    ->where('quantity_kg', '>', 0)
+                    ->orderBy('production_date', 'asc')
+                    ->orderBy('created_at', 'asc')
+                    ->first();
+            }
 
             if ($inventory) {
                 $remainingKg = $inventory->quantity_kg - $validated['quantity_kg'];
@@ -242,6 +255,10 @@ class GariSaleController extends Controller
                 // Update sale with the inventory item used
                 $sale->gari_inventory_id = $inventory->id;
                 $sale->save();
+            } else {
+                // No inventory record exists - this means the batch hasn't been converted to inventory yet
+                // The sale is still valid, but we can't deduct from inventory
+                // In a real system, you might want to create inventory records automatically here
             }
         }
 
