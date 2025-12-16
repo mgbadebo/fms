@@ -118,7 +118,7 @@ export default function GariProductionBatchDetail() {
                             </p>
                             {batch.total_cassava_cost && (
                                 <p className="text-xs text-gray-500">
-                                    ₦{batch.total_cassava_cost.toFixed(2)} total
+                                    ₦{Number(batch.total_cassava_cost).toFixed(2)} total
                                 </p>
                             )}
                         </div>
@@ -159,62 +159,62 @@ export default function GariProductionBatchDetail() {
                         Cost Breakdown
                     </h2>
                     <div className="space-y-3">
-                        {batch.total_cassava_cost > 0 && (
+                        {Number(batch.total_cassava_cost || 0) > 0 && (
                             <div className="flex justify-between">
                                 <span className="text-sm text-gray-600">Cassava Cost</span>
                                 <span className="text-sm font-medium text-gray-900">
-                                    ₦{batch.total_cassava_cost.toFixed(2)}
+                                    ₦{Number(batch.total_cassava_cost || 0).toFixed(2)}
                                 </span>
                             </div>
                         )}
                         <div className="flex justify-between">
                             <span className="text-sm text-gray-600">Labour</span>
                             <span className="text-sm font-medium text-gray-900">
-                                ₦{batch.labour_cost.toFixed(2)}
+                                ₦{Number(batch.labour_cost || 0).toFixed(2)}
                             </span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-sm text-gray-600">Fuel</span>
                             <span className="text-sm font-medium text-gray-900">
-                                ₦{batch.fuel_cost.toFixed(2)}
+                                ₦{Number(batch.fuel_cost || 0).toFixed(2)}
                             </span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-sm text-gray-600">Equipment</span>
                             <span className="text-sm font-medium text-gray-900">
-                                ₦{batch.equipment_cost.toFixed(2)}
+                                ₦{Number(batch.equipment_cost || 0).toFixed(2)}
                             </span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-sm text-gray-600">Water</span>
                             <span className="text-sm font-medium text-gray-900">
-                                ₦{batch.water_cost.toFixed(2)}
+                                ₦{Number(batch.water_cost || 0).toFixed(2)}
                             </span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-sm text-gray-600">Transport</span>
                             <span className="text-sm font-medium text-gray-900">
-                                ₦{batch.transport_cost.toFixed(2)}
+                                ₦{Number(batch.transport_cost || 0).toFixed(2)}
                             </span>
                         </div>
-                        {batch.other_costs > 0 && (
+                        {Number(batch.other_costs || 0) > 0 && (
                             <div className="flex justify-between">
                                 <span className="text-sm text-gray-600">Other</span>
                                 <span className="text-sm font-medium text-gray-900">
-                                    ₦{batch.other_costs.toFixed(2)}
+                                    ₦{Number(batch.other_costs || 0).toFixed(2)}
                                 </span>
                             </div>
                         )}
                         <div className="border-t pt-2 flex justify-between">
                             <span className="text-sm font-semibold text-gray-900">Total Processing</span>
                             <span className="text-sm font-semibold text-gray-900">
-                                ₦{batch.total_processing_cost.toFixed(2)}
+                                ₦{Number(batch.total_processing_cost || 0).toFixed(2)}
                             </span>
                         </div>
                         <div className="border-t pt-2 flex justify-between">
                             <span className="text-base font-bold text-gray-900">Total Cost</span>
                             <span className="text-base font-bold text-gray-900">
-                                ₦{batch.total_cost?.toFixed(2) || '0.00'}
+                                ₦{batch.total_cost != null ? Number(batch.total_cost).toFixed(2) : '0.00'}
                             </span>
                         </div>
                     </div>
@@ -287,9 +287,9 @@ export default function GariProductionBatchDetail() {
                                             {input.harvest_lot && ` • Lot: ${input.harvest_lot.code || input.harvest_lot.id}`}
                                         </p>
                                     </div>
-                                    {input.total_cost > 0 && (
+                                    {Number(input.total_cost || 0) > 0 && (
                                         <p className="text-sm font-medium text-gray-900">
-                                            ₦{input.total_cost.toFixed(2)}
+                                            ₦{Number(input.total_cost || 0).toFixed(2)}
                                         </p>
                                     )}
                                 </div>
