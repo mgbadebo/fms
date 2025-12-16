@@ -14,21 +14,31 @@ export default function GariProductionBatchDetail() {
 
     const fetchBatch = async () => {
         try {
+            console.log('Fetching batch with ID:', id);
             const response = await api.get(`/api/v1/gari-production-batches/${id}`);
-            console.log('Batch response:', response.data);
-            console.log('Batch ID from URL:', id);
-            // Handle response structure
+            console.log('Full API response:', response);
+            console.log('Response data:', response.data);
+            console.log('Response data.data:', response.data?.data);
+            
+            // Handle response structure - API returns { data: { ... } }
             const batchData = response.data?.data || response.data;
-            if (batchData && batchData.id) {
+            console.log('Extracted batch data:', batchData);
+            
+            if (batchData && (batchData.id || batchData.batch_code)) {
+                console.log('Setting batch:', batchData);
                 setBatch(batchData);
             } else {
                 console.error('Invalid batch data structure:', batchData);
+                console.error('Batch data keys:', batchData ? Object.keys(batchData) : 'null');
                 setBatch(null);
             }
         } catch (error) {
             console.error('Error fetching batch:', error);
-            console.error('Error response:', error.response?.data);
+            console.error('Error response:', error.response);
+            console.error('Error response data:', error.response?.data);
             console.error('Error status:', error.response?.status);
+            console.error('Error message:', error.message);
+            console.error('Request URL:', error.config?.url);
             console.error('Batch ID from URL:', id);
             // Set batch to null to show error message
             setBatch(null);
@@ -49,7 +59,10 @@ export default function GariProductionBatchDetail() {
         return (
             <div className="text-center py-12">
                 <p className="text-gray-500 mb-2">Production batch not found</p>
-                <p className="text-sm text-gray-400 mb-4">ID: {id}</p>
+                <p className="text-sm text-gray-400 mb-2">ID: {id}</p>
+                <p className="text-xs text-gray-400 mb-4">
+                    Check the browser console for detailed error information
+                </p>
                 <Link to="/gari-production-batches" className="text-green-600 hover:text-green-700 mt-4 inline-block">
                     ← Back to Batches
                 </Link>
