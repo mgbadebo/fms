@@ -85,9 +85,16 @@ class GariProductionBatchController extends Controller
         return response()->json(['data' => $batch->load('farm', 'cassavaInputs')], 201);
     }
 
-    public function show(GariProductionBatch $gariProductionBatch): JsonResponse
+    public function show(string $gariProductionBatch): JsonResponse
     {
-        $batch = $gariProductionBatch->load([
+        // Find the batch by ID (route parameter comes as string)
+        $batch = GariProductionBatch::withTrashed()->find($gariProductionBatch);
+        
+        if (!$batch) {
+            return response()->json(['message' => 'Production batch not found'], 404);
+        }
+        
+        $batch->load([
             'farm',
             'cassavaInputs.harvestLot',
             'cassavaInputs.field',
@@ -97,9 +104,12 @@ class GariProductionBatchController extends Controller
         return response()->json(['data' => $batch]);
     }
 
-    public function update(Request $request, GariProductionBatch $gariProductionBatch): JsonResponse
+    public function update(Request $request, string $gariProductionBatch): JsonResponse
     {
-        $batch = $gariProductionBatch;
+        $batch = GariProductionBatch::find($gariProductionBatch);
+        if (!$batch) {
+            return response()->json(['message' => 'Production batch not found'], 404);
+        }
 
         $validated = $request->validate([
             'processing_date' => 'sometimes|date',
@@ -146,9 +156,14 @@ class GariProductionBatchController extends Controller
         return response()->json(['data' => $batch->load('farm', 'cassavaInputs')]);
     }
 
-    public function destroy(GariProductionBatch $gariProductionBatch): JsonResponse
+    public function destroy(string $gariProductionBatch): JsonResponse
     {
-        $gariProductionBatch->delete();
+        $batch = GariProductionBatch::find($gariProductionBatch);
+        if (!$batch) {
+            return response()->json(['message' => 'Production batch not found'], 404);
+        }
+        
+        $batch->delete();
 
         return response()->json(null, 204);
     }
