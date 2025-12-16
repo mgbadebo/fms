@@ -310,17 +310,38 @@ class GariSaleController extends Controller
             $validated['final_amount'] = $totalAmount - $validated['discount'];
         }
 
-        $sale->update($validated);
-        
-        // Recalculate payment status if amount_paid changed (overrides manual payment_status if provided)
-        if (isset($validated['amount_paid'])) {
+        // Handle payment status and amount_paid logic
+        if (isset($validated['payment_status'])) {
+            // If payment_status is explicitly set, respect it and update amount_paid/amount_outstanding accordingly
+            if ($validated['payment_status'] === 'PAID') {
+                // If setting to PAID, ensure amount_paid equals final_amount
+                $validated['amount_paid'] = $sale->final_amount;
+                $validated['amount_outstanding'] = 0;
+            } elseif ($validated['payment_status'] === 'OUTSTANDING') {
+                // If setting to OUTSTANDING, set amount_paid to 0 if not explicitly provided
+                if (!isset($validated['amount_paid'])) {
+                    $validated['amount_paid'] = 0;
+                }
+                $validated['amount_outstanding'] = $sale->final_amount - ($validated['amount_paid'] ?? 0);
+            } else {
+                // PARTIAL - calculate outstanding based on current amount_paid
+                $amountPaid = $validated['amount_paid'] ?? $sale->amount_paid ?? 0;
+                $validated['amount_outstanding'] = $sale->final_amount - $amountPaid;
+            }
+        } elseif (isset($validated['amount_paid'])) {
+            // If only amount_paid changed (no explicit payment_status), recalculate payment status
+            // Temporarily set amount_paid to calculate payment status
+            $tempAmountPaid = $sale->amount_paid;
+            $sale->amount_paid = $validated['amount_paid'];
             $sale->calculatePayment();
+            // Add the calculated payment_status to validated
+            $validated['payment_status'] = $sale->payment_status;
+            $validated['amount_outstanding'] = $sale->amount_outstanding;
+            // Restore original for now (will be updated below)
+            $sale->amount_paid = $tempAmountPaid;
         }
-        // If payment_status was explicitly set but amount_paid wasn't changed, use the provided status
-        // But also ensure amount_outstanding is calculated correctly
-        if (isset($validated['payment_status']) && !isset($validated['amount_paid'])) {
-            $sale->amount_outstanding = $sale->final_amount - $sale->amount_paid;
-        }
+
+        $sale->update($validated);
         
         $sale->calculateMargins();
         $sale->save();
