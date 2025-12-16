@@ -99,8 +99,9 @@ Route::prefix('v1')->group(function () {
         // Gari Production System
         Route::apiResource('gari-production-batches', GariProductionBatchController::class);
         Route::apiResource('cassava-inputs', CassavaInputController::class);
-        Route::apiResource('gari-inventory', GariInventoryController::class);
+        // Gari Inventory - custom routes must come before apiResource to avoid route conflicts
         Route::get('gari-inventory/summary', [GariInventoryController::class, 'summary']);
+        Route::apiResource('gari-inventory', GariInventoryController::class);
         Route::apiResource('packaging-materials', PackagingMaterialController::class);
         // Gari Sales - custom routes must come before apiResource to avoid route conflicts
         Route::get('gari-sales/summary', [GariSaleController::class, 'summary']);
