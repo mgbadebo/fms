@@ -29,11 +29,11 @@ class GariSaleController extends Controller
         }
 
         if ($request->has('date_from')) {
-            $query->where('sale_date', '>=', $request->date_from);
+            $query->whereDate('sale_date', '>=', $request->date_from);
         }
 
         if ($request->has('date_to')) {
-            $query->where('sale_date', '<=', $request->date_to);
+            $query->whereDate('sale_date', '<=', $request->date_to);
         }
 
         $sales = $query->orderBy('sale_date', 'desc')->paginate(20);
@@ -367,11 +367,11 @@ class GariSaleController extends Controller
         }
 
         if ($request->has('date_from')) {
-            $query->where('sale_date', '>=', $request->date_from);
+            $query->whereDate('sale_date', '>=', $request->date_from);
         }
 
         if ($request->has('date_to')) {
-            $query->where('sale_date', '<=', $request->date_to);
+            $query->whereDate('sale_date', '<=', $request->date_to);
         }
 
         // Get overall summary (not grouped) - use a fresh query
@@ -380,10 +380,10 @@ class GariSaleController extends Controller
             $overallQuery->where('farm_id', $request->farm_id);
         }
         if ($request->has('date_from')) {
-            $overallQuery->where('sale_date', '>=', $request->date_from);
+            $overallQuery->whereDate('sale_date', '>=', $request->date_from);
         }
         if ($request->has('date_to')) {
-            $overallQuery->where('sale_date', '<=', $request->date_to);
+            $overallQuery->whereDate('sale_date', '<=', $request->date_to);
         }
         
         $overallSummary = $overallQuery->selectRaw('
@@ -400,10 +400,10 @@ class GariSaleController extends Controller
             $avgQuery->where('farm_id', $request->farm_id);
         }
         if ($request->has('date_from')) {
-            $avgQuery->where('sale_date', '>=', $request->date_from);
+            $avgQuery->whereDate('sale_date', '>=', $request->date_from);
         }
         if ($request->has('date_to')) {
-            $avgQuery->where('sale_date', '<=', $request->date_to);
+            $avgQuery->whereDate('sale_date', '<=', $request->date_to);
         }
         
         $salesForAvg = $avgQuery->select('quantity_kg', 'unit_price')->get();
