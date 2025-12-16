@@ -55,8 +55,11 @@ export default function GariKPIDashboard() {
             }
             
             // Use overall summary from API if available, otherwise calculate from sales array
+            console.log('Summary API Response:', summaryRes.data);
             const overallSummary = summaryRes.data.overall || {};
             const summary = summaryRes.data.data || summaryRes.data;
+            console.log('Overall Summary:', overallSummary);
+            console.log('Sales array length:', sales.length);
 
             // Calculate KPIs - ensure all values are numbers
             const totalCassava = batches.reduce((sum, b) => sum + (Number(b.cassava_quantity_kg) || 0), 0);
@@ -68,13 +71,13 @@ export default function GariKPIDashboard() {
             
             // Use overall summary from API (more accurate as it includes all sales, not just paginated)
             // Fallback to calculating from sales array if overall summary not available
-            const totalRevenue = overallSummary.total_revenue ?? 
+            const totalRevenue = overallSummary.total_revenue !== undefined ? overallSummary.total_revenue : 
                                sales.reduce((sum, s) => sum + (Number(s.final_amount) || 0), 0);
-            const totalMargin = overallSummary.total_margin ?? 
+            const totalMargin = overallSummary.total_margin !== undefined ? overallSummary.total_margin : 
                               sales.reduce((sum, s) => sum + (Number(s.gross_margin) || 0), 0);
-            const totalSalesVolumeKg = overallSummary.total_kg_sold ?? 
+            const totalSalesVolumeKg = overallSummary.total_kg_sold !== undefined ? overallSummary.total_kg_sold : 
                                      sales.reduce((sum, s) => sum + (Number(s.quantity_kg) || 0), 0);
-            const avgPricePerKg = overallSummary.avg_price_per_kg ?? 
+            const avgPricePerKg = overallSummary.avg_price_per_kg !== undefined ? overallSummary.avg_price_per_kg : 
                                 (() => {
                                     // Calculate weighted average price per kg (weighted by quantity)
                                     let totalPriceWeighted = 0;
@@ -90,25 +93,37 @@ export default function GariKPIDashboard() {
                                     return totalQuantityForPrice > 0 ? totalPriceWeighted / totalQuantityForPrice : 0;
                                 })();
             
+            console.log('Calculated KPIs:', {
+                totalRevenue,
+                totalMargin,
+                totalSalesVolumeKg,
+                avgPricePerKg,
+                totalSales: overallSummary.total_sales !== undefined ? overallSummary.total_sales : sales.length
+            });
+            
             const totalStock = inventory.reduce((sum, i) => sum + (Number(i.quantity_kg) || 0), 0);
 
+            const kpiSummary = {
+                totalCassava,
+                totalGari,
+                avgYield,
+                avgCostPerKg,
+                totalRevenue,
+                totalMargin,
+                totalStock,
+                avgPricePerKg,
+                totalSalesVolumeKg,
+                totalBatches: batches.length,
+                totalSales: overallSummary.total_sales !== undefined ? overallSummary.total_sales : sales.length,
+            };
+            
+            console.log('Setting KPIs summary:', kpiSummary);
+            
             setKpis({
                 batches,
                 inventory,
                 sales,
-                summary: {
-                    totalCassava,
-                    totalGari,
-                    avgYield,
-                    avgCostPerKg,
-                    totalRevenue,
-                    totalMargin,
-                    totalStock,
-                    avgPricePerKg,
-                    totalSalesVolumeKg,
-                    totalBatches: batches.length,
-                    totalSales: overallSummary.total_sales ?? sales.length,
-                },
+                summary: kpiSummary,
             });
         } catch (error) {
             console.error('Error fetching KPI data:', error);
