@@ -212,8 +212,8 @@ export default function GariSales() {
         );
     }
 
-    const totalRevenue = sales.reduce((sum, sale) => sum + (sale.final_amount || 0), 0);
-    const totalMargin = sales.reduce((sum, sale) => sum + (sale.gross_margin || 0), 0);
+    const totalRevenue = sales.reduce((sum, sale) => sum + (Number(sale.final_amount) || 0), 0);
+    const totalMargin = sales.reduce((sum, sale) => sum + (Number(sale.gross_margin) || 0), 0);
 
     return (
         <div>
@@ -235,11 +235,11 @@ export default function GariSales() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div className="bg-white rounded-lg shadow p-6">
                     <p className="text-sm text-gray-600 mb-1">Total Revenue</p>
-                    <p className="text-2xl font-bold text-gray-900">₦{totalRevenue.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-gray-900">₦{Number(totalRevenue || 0).toFixed(2)}</p>
                 </div>
                 <div className="bg-white rounded-lg shadow p-6">
                     <p className="text-sm text-gray-600 mb-1">Total Margin</p>
-                    <p className="text-2xl font-bold text-green-600">₦{totalMargin.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-green-600">₦{Number(totalMargin || 0).toFixed(2)}</p>
                 </div>
                 <div className="bg-white rounded-lg shadow p-6">
                     <p className="text-sm text-gray-600 mb-1">Total Sales</p>
@@ -296,12 +296,12 @@ export default function GariSales() {
                                             {sale.quantity_kg} kg
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            ₦{sale.final_amount.toFixed(2)}
+                                            ₦{Number(sale.final_amount || 0).toFixed(2)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600">
-                                            ₦{sale.gross_margin?.toFixed(2) || '0.00'}
+                                            ₦{Number(sale.gross_margin || 0).toFixed(2)}
                                             <span className="text-xs text-gray-500 ml-1">
-                                                ({sale.gross_margin_percent?.toFixed(1) || '0'}%)
+                                                ({Number(sale.gross_margin_percent || 0).toFixed(1)}%)
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
