@@ -38,18 +38,18 @@ export default function GariKPIDashboard() {
             const sales = salesRes.data.data || salesRes.data;
             const summary = summaryRes.data.data || summaryRes.data;
 
-            // Calculate KPIs
-            const totalCassava = batches.reduce((sum, b) => sum + (b.cassava_quantity_kg || 0), 0);
-            const totalGari = batches.reduce((sum, b) => sum + (b.gari_produced_kg || 0), 0);
+            // Calculate KPIs - ensure all values are numbers
+            const totalCassava = batches.reduce((sum, b) => sum + (Number(b.cassava_quantity_kg) || 0), 0);
+            const totalGari = batches.reduce((sum, b) => sum + (Number(b.gari_produced_kg) || 0), 0);
             const avgYield = totalCassava > 0 ? (totalGari / totalCassava) * 100 : 0;
             const avgCostPerKg = batches.length > 0 
-                ? batches.reduce((sum, b) => sum + (b.cost_per_kg_gari || 0), 0) / batches.length 
+                ? batches.reduce((sum, b) => sum + (Number(b.cost_per_kg_gari) || 0), 0) / batches.length 
                 : 0;
-            const totalRevenue = sales.reduce((sum, s) => sum + (s.final_amount || 0), 0);
-            const totalMargin = sales.reduce((sum, s) => sum + (s.gross_margin || 0), 0);
-            const totalStock = inventory.reduce((sum, i) => sum + (i.quantity_kg || 0), 0);
+            const totalRevenue = sales.reduce((sum, s) => sum + (Number(s.final_amount) || 0), 0);
+            const totalMargin = sales.reduce((sum, s) => sum + (Number(s.gross_margin) || 0), 0);
+            const totalStock = inventory.reduce((sum, i) => sum + (Number(i.quantity_kg) || 0), 0);
             const avgPricePerKg = sales.length > 0
-                ? sales.reduce((sum, s) => sum + (s.unit_price || 0), 0) / sales.length
+                ? sales.reduce((sum, s) => sum + (Number(s.unit_price) || 0), 0) / sales.length
                 : 0;
 
             setKpis({
@@ -117,7 +117,7 @@ export default function GariKPIDashboard() {
                         <TrendingUp className="h-5 w-5 text-green-600" />
                     </div>
                     <p className="text-3xl font-bold text-gray-900">
-                        {summary.avgYield?.toFixed(1) || '0'}%
+                        {Number(summary.avgYield || 0).toFixed(1)}%
                     </p>
                     <p className="text-xs text-gray-500 mt-1">Target: 22-30%</p>
                     {summary.avgYield && (
@@ -140,7 +140,7 @@ export default function GariKPIDashboard() {
                         <DollarSign className="h-5 w-5 text-blue-600" />
                     </div>
                     <p className="text-3xl font-bold text-gray-900">
-                        ₦{summary.avgCostPerKg?.toFixed(2) || '0.00'}
+                        ₦{Number(summary.avgCostPerKg || 0).toFixed(2)}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">Average production cost</p>
                 </div>
@@ -151,7 +151,7 @@ export default function GariKPIDashboard() {
                         <Package className="h-5 w-5 text-purple-600" />
                     </div>
                     <p className="text-3xl font-bold text-gray-900">
-                        {summary.totalStock?.toFixed(2) || '0'} kg
+                        {Number(summary.totalStock || 0).toFixed(2)} kg
                     </p>
                     <p className="text-xs text-gray-500 mt-1">Current inventory</p>
                 </div>
@@ -173,7 +173,7 @@ export default function GariKPIDashboard() {
                         <DollarSign className="h-5 w-5 text-green-600" />
                     </div>
                     <p className="text-3xl font-bold text-gray-900">
-                        ₦{summary.avgPricePerKg?.toFixed(2) || '0.00'}
+                        ₦{Number(summary.avgPricePerKg || 0).toFixed(2)}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">Per kg</p>
                 </div>
@@ -184,11 +184,11 @@ export default function GariKPIDashboard() {
                         <DollarSign className="h-5 w-5 text-green-600" />
                     </div>
                     <p className="text-3xl font-bold text-green-600">
-                        ₦{summary.totalMargin?.toFixed(2) || '0.00'}
+                        ₦{Number(summary.totalMargin || 0).toFixed(2)}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
-                        {summary.totalRevenue > 0 
-                            ? ((summary.totalMargin / summary.totalRevenue) * 100).toFixed(1) + '% margin'
+                        {Number(summary.totalRevenue || 0) > 0 
+                            ? Number((Number(summary.totalMargin || 0) / Number(summary.totalRevenue || 1)) * 100).toFixed(1) + '% margin'
                             : 'No sales'}
                     </p>
                 </div>
@@ -208,15 +208,15 @@ export default function GariKPIDashboard() {
                         </div>
                         <div className="flex justify-between">
                             <span className="text-sm text-gray-600">Cassava Processed</span>
-                            <span className="text-sm font-medium text-gray-900">{summary.totalCassava?.toFixed(2) || '0'} kg</span>
+                            <span className="text-sm font-medium text-gray-900">{Number(summary.totalCassava || 0).toFixed(2)} kg</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-sm text-gray-600">Gari Produced</span>
-                            <span className="text-sm font-medium text-gray-900">{summary.totalGari?.toFixed(2) || '0'} kg</span>
+                            <span className="text-sm font-medium text-gray-900">{Number(summary.totalGari || 0).toFixed(2)} kg</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-sm text-gray-600">Average Yield</span>
-                            <span className="text-sm font-medium text-gray-900">{summary.avgYield?.toFixed(1) || '0'}%</span>
+                            <span className="text-sm font-medium text-gray-900">{Number(summary.avgYield || 0).toFixed(1)}%</span>
                         </div>
                     </div>
                 </div>
@@ -229,15 +229,15 @@ export default function GariKPIDashboard() {
                     <div className="space-y-3">
                         <div className="flex justify-between">
                             <span className="text-sm text-gray-600">Total Revenue</span>
-                            <span className="text-sm font-medium text-gray-900">₦{summary.totalRevenue?.toFixed(2) || '0.00'}</span>
+                            <span className="text-sm font-medium text-gray-900">₦{Number(summary.totalRevenue || 0).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-sm text-gray-600">Total Margin</span>
-                            <span className="text-sm font-medium text-green-600">₦{summary.totalMargin?.toFixed(2) || '0.00'}</span>
+                            <span className="text-sm font-medium text-green-600">₦{Number(summary.totalMargin || 0).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-sm text-gray-600">Average Price</span>
-                            <span className="text-sm font-medium text-gray-900">₦{summary.avgPricePerKg?.toFixed(2) || '0.00'}/kg</span>
+                            <span className="text-sm font-medium text-gray-900">₦{Number(summary.avgPricePerKg || 0).toFixed(2)}/kg</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-sm text-gray-600">Total Sales</span>
