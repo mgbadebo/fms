@@ -104,6 +104,7 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('packaging-materials', PackagingMaterialController::class);
         Route::apiResource('gari-sales', GariSaleController::class);
         Route::get('gari-sales/summary', [GariSaleController::class, 'summary']);
+        Route::get('gari-sales/available-batches', [GariSaleController::class, 'getAvailableBatches']);
         Route::apiResource('gari-waste-losses', GariWasteLossController::class);
     });
 });

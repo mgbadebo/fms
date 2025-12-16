@@ -12,6 +12,8 @@ class GariSale extends Model
 
     protected $fillable = [
         'farm_id',
+        'gari_production_batch_id',
+        'gari_inventory_id',
         'sale_code',
         'sale_date',
         'customer_id',
@@ -67,6 +69,16 @@ class GariSale extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function gariProductionBatch()
+    {
+        return $this->belongsTo(GariProductionBatch::class);
+    }
+
+    public function gariInventory()
+    {
+        return $this->belongsTo(GariInventory::class);
     }
 
     // Calculate margins

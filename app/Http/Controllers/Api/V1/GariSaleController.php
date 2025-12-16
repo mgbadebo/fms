@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\GariSale;
+use App\Models\GariInventory;
+use App\Models\GariProductionBatch;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
@@ -38,10 +40,70 @@ class GariSaleController extends Controller
         return response()->json($sales);
     }
 
+    // Get available inventory batches for FIFO selection
+    public function getAvailableBatches(Request $request): JsonResponse
+    {
+        $request->validate([
+            'farm_id' => 'required|exists:farms,id',
+            'gari_type' => 'required|in:WHITE,YELLOW',
+            'gari_grade' => 'required|in:FINE,COARSE,MIXED',
+            'packaging_type' => 'required|in:1KG_POUCH,2KG_POUCH,5KG_PACK,50KG_BAG,BULK',
+        ]);
+
+        // Get inventory items matching the criteria, ordered by production date (FIFO)
+        $inventory = GariInventory::where('farm_id', $request->farm_id)
+            ->where('gari_type', $request->gari_type)
+            ->where('gari_grade', $request->gari_grade)
+            ->where('packaging_type', $request->packaging_type)
+            ->where('status', 'IN_STOCK')
+            ->where('quantity_kg', '>', 0)
+            ->with('gariProductionBatch')
+            ->orderBy('production_date', 'asc') // FIFO: oldest first
+            ->orderBy('created_at', 'asc') // Secondary sort for same date
+            ->get();
+
+        // Group by batch and calculate available quantity
+        $batches = [];
+        foreach ($inventory as $item) {
+            $batchId = $item->gari_production_batch_id;
+            if (!$batchId) continue;
+
+            if (!isset($batches[$batchId])) {
+                $batches[$batchId] = [
+                    'batch_id' => $batchId,
+                    'batch_code' => $item->gariProductionBatch->batch_code ?? 'N/A',
+                    'production_date' => $item->production_date ?? $item->gariProductionBatch->processing_date ?? null,
+                    'available_kg' => 0,
+                    'cost_per_kg' => $item->cost_per_kg,
+                    'inventory_items' => [],
+                ];
+            }
+
+            $batches[$batchId]['available_kg'] += $item->quantity_kg;
+            $batches[$batchId]['inventory_items'][] = [
+                'id' => $item->id,
+                'quantity_kg' => $item->quantity_kg,
+                'cost_per_kg' => $item->cost_per_kg,
+            ];
+        }
+
+        // Convert to array and sort by production date (FIFO)
+        $batchesArray = array_values($batches);
+        usort($batchesArray, function($a, $b) {
+            $dateA = $a['production_date'] ? strtotime($a['production_date']) : 0;
+            $dateB = $b['production_date'] ? strtotime($b['production_date']) : 0;
+            return $dateA <=> $dateB;
+        });
+
+        return response()->json(['data' => $batchesArray]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'farm_id' => 'required|exists:farms,id',
+            'gari_production_batch_id' => 'nullable|exists:gari_production_batches,id',
+            'gari_inventory_id' => 'nullable|exists:gari_inventory,id',
             'sale_date' => 'required|date',
             'customer_id' => 'nullable|exists:customers,id',
             'customer_name' => 'nullable|string|max:255',
@@ -73,6 +135,22 @@ class GariSaleController extends Controller
         $validated['total_amount'] = $validated['quantity_kg'] * $validated['unit_price'];
         $validated['final_amount'] = $validated['total_amount'] - $validated['discount'];
 
+        // If batch is provided but cost_per_kg is not, get it from the batch
+        if (isset($validated['gari_production_batch_id']) && !isset($validated['cost_per_kg'])) {
+            $batch = GariProductionBatch::find($validated['gari_production_batch_id']);
+            if ($batch && $batch->cost_per_kg_gari) {
+                $validated['cost_per_kg'] = $batch->cost_per_kg_gari;
+            }
+        }
+
+        // If inventory item is provided but cost_per_kg is not, get it from inventory
+        if (isset($validated['gari_inventory_id']) && !isset($validated['cost_per_kg'])) {
+            $inventory = GariInventory::find($validated['gari_inventory_id']);
+            if ($inventory && $inventory->cost_per_kg) {
+                $validated['cost_per_kg'] = $inventory->cost_per_kg;
+            }
+        }
+
         $sale = GariSale::create($validated);
         
         // Calculate margins and payment
@@ -80,12 +158,52 @@ class GariSaleController extends Controller
         $sale->calculatePayment();
         $sale->save();
 
-        return response()->json(['data' => $sale->load('farm', 'customer')], 201);
+        // Update inventory if batch/inventory is specified
+        if (isset($validated['gari_inventory_id'])) {
+            $inventory = GariInventory::find($validated['gari_inventory_id']);
+            if ($inventory) {
+                $remainingKg = $inventory->quantity_kg - $validated['quantity_kg'];
+                if ($remainingKg <= 0) {
+                    $inventory->status = 'SOLD';
+                    $inventory->quantity_kg = 0;
+                } else {
+                    $inventory->quantity_kg = $remainingKg;
+                }
+                $inventory->save();
+            }
+        } elseif (isset($validated['gari_production_batch_id'])) {
+            // If no specific inventory item, reduce from oldest matching inventory (FIFO)
+            $inventory = GariInventory::where('gari_production_batch_id', $validated['gari_production_batch_id'])
+                ->where('gari_type', $validated['gari_type'])
+                ->where('gari_grade', $validated['gari_grade'])
+                ->where('packaging_type', $validated['packaging_type'])
+                ->where('status', 'IN_STOCK')
+                ->where('quantity_kg', '>', 0)
+                ->orderBy('production_date', 'asc')
+                ->orderBy('created_at', 'asc')
+                ->first();
+
+            if ($inventory) {
+                $remainingKg = $inventory->quantity_kg - $validated['quantity_kg'];
+                if ($remainingKg <= 0) {
+                    $inventory->status = 'SOLD';
+                    $inventory->quantity_kg = 0;
+                } else {
+                    $inventory->quantity_kg = $remainingKg;
+                }
+                $inventory->save();
+                // Update sale with the inventory item used
+                $sale->gari_inventory_id = $inventory->id;
+                $sale->save();
+            }
+        }
+
+        return response()->json(['data' => $sale->load('farm', 'customer', 'gariProductionBatch', 'gariInventory')], 201);
     }
 
     public function show(string $id): JsonResponse
     {
-        $sale = GariSale::with(['farm', 'customer'])->findOrFail($id);
+        $sale = GariSale::with(['farm', 'customer', 'gariProductionBatch', 'gariInventory'])->findOrFail($id);
         return response()->json(['data' => $sale]);
     }
 
@@ -99,6 +217,8 @@ class GariSaleController extends Controller
             'customer_name' => 'nullable|string|max:255',
             'customer_contact' => 'nullable|string|max:255',
             'customer_type' => 'sometimes|in:RETAIL,BULK_BUYER,DISTRIBUTOR,CATERING,HOTEL,OTHER',
+            'gari_production_batch_id' => 'nullable|exists:gari_production_batches,id',
+            'gari_inventory_id' => 'nullable|exists:gari_inventory,id',
             'gari_type' => 'sometimes|in:WHITE,YELLOW',
             'gari_grade' => 'sometimes|in:FINE,COARSE,MIXED',
             'packaging_type' => 'sometimes|in:1KG_POUCH,2KG_POUCH,5KG_PACK,50KG_BAG,BULK',
