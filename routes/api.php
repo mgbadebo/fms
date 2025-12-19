@@ -18,6 +18,14 @@ use App\Http\Controllers\Api\V1\GariInventoryController;
 use App\Http\Controllers\Api\V1\PackagingMaterialController;
 use App\Http\Controllers\Api\V1\GariSaleController;
 use App\Http\Controllers\Api\V1\GariWasteLossController;
+use App\Http\Controllers\Api\V1\GreenhouseController;
+use App\Http\Controllers\Api\V1\BellPepperCycleController;
+use App\Http\Controllers\Api\V1\BellPepperCycleCostController;
+use App\Http\Controllers\Api\V1\BellPepperHarvestController;
+use App\Http\Controllers\Api\V1\BellPepperSaleController;
+use App\Http\Controllers\Api\V1\BoreholeController;
+use App\Http\Controllers\Api\V1\LocationController;
+use App\Http\Controllers\Api\V1\AdminZoneController;
 
 Route::prefix('v1')->group(function () {
     // Public authentication routes
@@ -108,6 +116,28 @@ Route::prefix('v1')->group(function () {
         Route::get('gari-sales/available-batches', [GariSaleController::class, 'getAvailableBatches']);
         Route::apiResource('gari-sales', GariSaleController::class);
         Route::apiResource('gari-waste-losses', GariWasteLossController::class);
+        
+        // Bell Pepper Greenhouse Management
+        Route::apiResource('greenhouses', GreenhouseController::class);
+        
+        // Boreholes
+        Route::apiResource('boreholes', BoreholeController::class);
+        
+        // Bell Pepper Cycles
+        Route::apiResource('bell-pepper-cycles', BellPepperCycleController::class);
+        
+        // Bell Pepper Cycle Costs
+        Route::apiResource('bell-pepper-cycle-costs', BellPepperCycleCostController::class);
+        
+        // Bell Pepper Harvests
+        Route::apiResource('bell-pepper-harvests', BellPepperHarvestController::class);
+        
+        // Bell Pepper Sales
+        Route::apiResource('bell-pepper-sales', BellPepperSaleController::class);
+        
+        // Admin Settings - Locations and Zones
+        Route::apiResource('locations', LocationController::class);
+        Route::apiResource('admin-zones', AdminZoneController::class);
     });
 });
 

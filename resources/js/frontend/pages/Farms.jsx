@@ -5,11 +5,14 @@ import { Tractor, Plus, MapPin, Calendar } from 'lucide-react';
 
 export default function Farms() {
     const [farms, setFarms] = useState([]);
+    const [locations, setLocations] = useState([]);
+    const [adminZones, setAdminZones] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
-        location: '',
+        location_id: '',
+        admin_zone_id: '',
         description: '',
         total_area: '',
         area_unit: 'hectares',
@@ -22,13 +25,51 @@ export default function Farms() {
 
     const fetchFarms = async () => {
         try {
-            const response = await api.get('/api/v1/farms');
-            setFarms(response.data.data || response.data);
+            const response = await api.get('/api/v1/farms?per_page=1000');
+            const data = response.data?.data || (Array.isArray(response.data) ? response.data : []);
+            setFarms(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Error fetching farms:', error);
         } finally {
             setLoading(false);
         }
+    };
+
+    const fetchLocationsAndZones = async () => {
+        try {
+            const [locationsRes, zonesRes] = await Promise.all([
+                api.get('/api/v1/locations?per_page=1000&is_active=1'),
+                api.get('/api/v1/admin-zones?per_page=1000&is_active=1'),
+            ]);
+            const locationsData = locationsRes.data?.data || (Array.isArray(locationsRes.data) ? locationsRes.data : []);
+            const zonesData = zonesRes.data?.data || (Array.isArray(zonesRes.data) ? zonesRes.data : []);
+            setLocations(Array.isArray(locationsData) ? locationsData : []);
+            setAdminZones(Array.isArray(zonesData) ? zonesData : []);
+        } catch (error) {
+            console.error('Error fetching locations/zones:', error);
+        }
+    };
+
+    const handleModalOpen = () => {
+        fetchLocationsAndZones();
+        setFormData({
+            name: '',
+            location_id: '',
+            admin_zone_id: '',
+            description: '',
+            total_area: '',
+            area_unit: 'hectares',
+            is_active: true,
+        });
+        setShowModal(true);
+    };
+
+    const handleLocationChange = (locationId) => {
+        setFormData({
+            ...formData,
+            location_id: locationId,
+            admin_zone_id: '', // Reset zone when location changes
+        });
     };
 
     const handleSubmit = async (e) => {
@@ -38,7 +79,8 @@ export default function Farms() {
             setShowModal(false);
             setFormData({
                 name: '',
-                location: '',
+                location_id: '',
+                admin_zone_id: '',
                 description: '',
                 total_area: '',
                 area_unit: 'hectares',
@@ -66,7 +108,7 @@ export default function Farms() {
                     <p className="mt-2 text-gray-600">Manage your farm locations</p>
                 </div>
                 <button
-                    onClick={() => setShowModal(true)}
+                    onClick={handleModalOpen}
                     className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"
                 >
                     <Plus className="h-5 w-5 mr-2" />
@@ -113,10 +155,12 @@ export default function Farms() {
                                     </span>
                                 )}
                             </div>
-                            {farm.location && (
+                            {(farm.location || farm.admin_zone) && (
                                 <div className="flex items-center text-sm text-gray-600 mb-2">
                                     <MapPin className="h-4 w-4 mr-1" />
-                                    {farm.location}
+                                    {farm.location?.name}
+                                    {farm.location?.name && farm.admin_zone?.name && ' - '}
+                                    {farm.admin_zone?.name}
                                 </div>
                             )}
                             {farm.total_area && (
@@ -157,12 +201,38 @@ export default function Farms() {
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Location
                                     </label>
-                                    <input
-                                        type="text"
-                                        value={formData.location}
-                                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                    <select
+                                        value={formData.location_id}
+                                        onChange={(e) => handleLocationChange(e.target.value)}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
-                                    />
+                                    >
+                                        <option value="">Select Location</option>
+                                        {locations.map((location) => (
+                                            <option key={location.id} value={location.id}>
+                                                {location.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Zone
+                                    </label>
+                                    <select
+                                        value={formData.admin_zone_id}
+                                        onChange={(e) => setFormData({ ...formData, admin_zone_id: e.target.value })}
+                                        disabled={!formData.location_id}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100"
+                                    >
+                                        <option value="">Select Zone</option>
+                                        {adminZones
+                                            .filter(zone => zone.location_id == formData.location_id)
+                                            .map((zone) => (
+                                                <option key={zone.id} value={zone.id}>
+                                                    {zone.name}
+                                                </option>
+                                            ))}
+                                    </select>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -202,6 +272,16 @@ export default function Farms() {
                                             <option value="square_meters">Square Meters</option>
                                         </select>
                                     </div>
+                                </div>
+                                <div>
+                                    <label className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.is_active}
+                                            onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                                        />
+                                        <span className="text-sm font-medium text-gray-700">Active</span>
+                                    </label>
                                 </div>
                             </div>
                             <div className="mt-6 flex justify-end space-x-3">

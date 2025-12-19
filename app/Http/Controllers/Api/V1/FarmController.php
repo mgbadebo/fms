@@ -11,7 +11,7 @@ class FarmController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $farms = Farm::with(['users', 'seasons'])->paginate(20);
+        $farms = Farm::with(['users', 'seasons', 'location', 'adminZone'])->paginate(20);
         return response()->json($farms);
     }
 
@@ -19,7 +19,8 @@ class FarmController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'location' => 'nullable|string|max:255',
+            'location_id' => 'nullable|exists:locations,id',
+            'admin_zone_id' => 'nullable|exists:admin_zones,id',
             'description' => 'nullable|string',
             'total_area' => 'nullable|numeric',
             'area_unit' => 'nullable|string',
@@ -38,7 +39,7 @@ class FarmController extends Controller
 
     public function show(string $id): JsonResponse
     {
-        $farm = Farm::with(['users', 'seasons', 'fields', 'cropPlans'])->findOrFail($id);
+        $farm = Farm::with(['users', 'seasons', 'fields', 'cropPlans', 'location', 'adminZone'])->findOrFail($id);
         return response()->json(['data' => $farm]);
     }
 
@@ -48,7 +49,8 @@ class FarmController extends Controller
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
-            'location' => 'nullable|string|max:255',
+            'location_id' => 'nullable|exists:locations,id',
+            'admin_zone_id' => 'nullable|exists:admin_zones,id',
             'description' => 'nullable|string',
             'total_area' => 'nullable|numeric',
             'area_unit' => 'nullable|string',

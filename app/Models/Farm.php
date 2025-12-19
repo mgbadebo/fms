@@ -12,7 +12,8 @@ class Farm extends Model
 
     protected $fillable = [
         'name',
-        'location',
+        'location_id',
+        'admin_zone_id',
         'description',
         'total_area',
         'area_unit',
@@ -115,5 +116,21 @@ class Farm extends Model
     public function inventoryLocations()
     {
         return $this->hasMany(InventoryLocation::class);
+    }
+
+    /**
+     * Get the location for this farm.
+     */
+    public function location()
+    {
+        return $this->belongsTo(Location::class);
+    }
+
+    /**
+     * Get the admin zone for this farm.
+     */
+    public function adminZone()
+    {
+        return $this->belongsTo(AdminZone::class, 'admin_zone_id');
     }
 }
