@@ -77,7 +77,7 @@ export default function Layout({ children }) {
     const toggleGroup = (group) => {
         setExpandedGroups(prev => ({
             ...prev,
-            [group]: !prev[group]
+            [group]: !(prev[group] || false)
         }));
     };
 
@@ -259,13 +259,18 @@ export default function Layout({ children }) {
     const renderNavGroup = (group) => {
         if (group.key) {
             // Collapsible group
-            const expanded = expandedGroups[group.key];
+            const expanded = expandedGroups[group.key] || false;
             const groupActive = isGroupActive(group);
             
             return (
                 <div key={group.name}>
                     <button
-                        onClick={() => toggleGroup(group.key)}
+                        type="button"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleGroup(group.key);
+                        }}
                         className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
                             groupActive
                                 ? 'bg-green-50 text-green-700'
