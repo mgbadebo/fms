@@ -25,6 +25,7 @@ import Greenhouses from './pages/Greenhouses';
 import Boreholes from './pages/Boreholes';
 import BellPepperProduction from './pages/BellPepperProduction';
 import BellPepperCycleDetail from './pages/BellPepperCycleDetail';
+import BellPepperHarvests from './pages/BellPepperHarvests';
 import Locations from './pages/Locations';
 import AdminZones from './pages/AdminZones';
 import Layout from './components/Layout';
@@ -80,6 +81,7 @@ function App() {
                                     <Route path="/boreholes" element={<Boreholes />} />
                                     <Route path="/bell-pepper-production" element={<BellPepperProduction />} />
                                     <Route path="/bell-pepper-cycles/:id" element={<BellPepperCycleDetail />} />
+                                    <Route path="/bell-pepper-harvests" element={<BellPepperHarvests />} />
                                     <Route path="/bell-pepper-inventory" element={<CropPlaceholder cropName="Bell Pepper" basePath="bell-pepper" />} />
                                     <Route path="/bell-pepper-sales" element={<CropPlaceholder cropName="Bell Pepper" basePath="bell-pepper" />} />
                                     <Route path="/bell-pepper-kpis" element={<CropPlaceholder cropName="Bell Pepper" basePath="bell-pepper" />} />

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -30,13 +30,32 @@ export default function Layout({ children }) {
     const location = useLocation();
     const navigate = useNavigate();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [expandedGroups, setExpandedGroups] = useState({
-        gari: true,
-        bellPepper: false,
-        tomatoes: false,
-        habaneros: false,
-        livestock: false,
-    });
+    
+    // Auto-expand groups based on current route
+    const getInitialExpandedGroups = () => {
+        const path = location.pathname;
+        return {
+            gari: path.startsWith('/gari'),
+            bellPepper: true, // Always expanded by default for easy access
+            tomatoes: path.startsWith('/tomatoes'),
+            habaneros: path.startsWith('/habaneros'),
+            livestock: false,
+        };
+    };
+
+    const [expandedGroups, setExpandedGroups] = useState(getInitialExpandedGroups());
+
+    // Update expanded groups when location changes
+    useEffect(() => {
+        const path = location.pathname;
+        setExpandedGroups(prev => ({
+            ...prev,
+            gari: path.startsWith('/gari') ? true : prev.gari,
+            bellPepper: path.startsWith('/bell-pepper') || path.startsWith('/greenhouses') || path.startsWith('/boreholes') ? true : prev.bellPepper,
+            tomatoes: path.startsWith('/tomatoes') ? true : prev.tomatoes,
+            habaneros: path.startsWith('/habaneros') ? true : prev.habaneros,
+        }));
+    }, [location.pathname]);
 
     const handleLogout = () => {
         logout();
@@ -83,6 +102,7 @@ export default function Layout({ children }) {
                 { name: 'Greenhouses', href: '/greenhouses', icon: Factory },
                 { name: 'Boreholes', href: '/boreholes', icon: Factory },
                 { name: 'Production', href: '/bell-pepper-production', icon: Factory },
+                { name: 'Harvests', href: '/bell-pepper-harvests', icon: Package },
                 { name: 'Inventory', href: '/bell-pepper-inventory', icon: Package },
                 { name: 'Sales', href: '/bell-pepper-sales', icon: ShoppingCart },
                 { name: 'KPIs', href: '/bell-pepper-kpis', icon: TrendingUp },

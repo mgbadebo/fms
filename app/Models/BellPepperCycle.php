@@ -87,4 +87,47 @@ class BellPepperCycle extends Model
             $this->actual_yield_per_sqm = 0;
         }
     }
+
+    // Calculate total revenue from all sales for this cycle
+    public function getTotalRevenue(): float
+    {
+        $total = 0;
+        foreach ($this->harvests as $harvest) {
+            $total += $harvest->getRevenue();
+        }
+        return $total;
+    }
+
+    // Calculate revenue by grade for this cycle
+    public function getRevenueByGrade(string $grade): float
+    {
+        $total = 0;
+        foreach ($this->harvests as $harvest) {
+            $total += $harvest->getRevenueByGrade($grade);
+        }
+        return $total;
+    }
+
+    // Calculate profit margin (revenue - expenses) for this cycle
+    public function getProfitMargin(): float
+    {
+        $revenue = $this->getTotalRevenue();
+        $expenses = $this->getTotalCosts();
+        // Add amortized greenhouse and borehole costs
+        if ($this->greenhouse) {
+            $expenses += $this->greenhouse->getAmortizedCostPerCycle();
+            $expenses += $this->greenhouse->getBoreholeAmortizedCostPerCycle();
+        }
+        return $revenue - $expenses;
+    }
+
+    // Calculate profit margin percentage
+    public function getProfitMarginPercentage(): float
+    {
+        $revenue = $this->getTotalRevenue();
+        if ($revenue == 0) {
+            return 0;
+        }
+        return (($this->getProfitMargin() / $revenue) * 100);
+    }
 }

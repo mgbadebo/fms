@@ -72,4 +72,59 @@ class Greenhouse extends Model
         }
         return $total;
     }
+
+    // Get all harvests for this greenhouse
+    public function harvests()
+    {
+        return $this->hasManyThrough(BellPepperHarvest::class, BellPepperCycle::class);
+    }
+
+    // Calculate total revenue for this greenhouse across all cycles
+    public function getTotalRevenue(): float
+    {
+        $total = 0;
+        foreach ($this->bellPepperCycles as $cycle) {
+            $total += $cycle->getTotalRevenue();
+        }
+        return $total;
+    }
+
+    // Calculate total revenue for a specific year
+    public function getRevenueForYear(int $year): float
+    {
+        $total = 0;
+        foreach ($this->bellPepperCycles()->whereYear('start_date', $year)->get() as $cycle) {
+            $total += $cycle->getTotalRevenue();
+        }
+        return $total;
+    }
+
+    // Calculate total expenses for this greenhouse across all cycles
+    public function getTotalExpenses(): float
+    {
+        $total = 0;
+        foreach ($this->bellPepperCycles as $cycle) {
+            $total += $cycle->getTotalCosts();
+        }
+        // Add amortized greenhouse and borehole costs
+        $total += $this->getAmortizedCostPerCycle() * $this->bellPepperCycles()->count();
+        $total += $this->getBoreholeAmortizedCostPerCycle() * $this->bellPepperCycles()->count();
+        return $total;
+    }
+
+    // Calculate profit margin (revenue - expenses)
+    public function getProfitMargin(): float
+    {
+        return $this->getTotalRevenue() - $this->getTotalExpenses();
+    }
+
+    // Calculate profit margin percentage
+    public function getProfitMarginPercentage(): float
+    {
+        $revenue = $this->getTotalRevenue();
+        if ($revenue == 0) {
+            return 0;
+        }
+        return (($this->getProfitMargin() / $revenue) * 100);
+    }
 }
