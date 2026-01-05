@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
         // Create roles
         $roles = ['OWNER', 'MANAGER', 'WORKER', 'FINANCE', 'AUDITOR', 'ADMIN', 'HARVESTER'];
         foreach ($roles as $roleName) {
-            Role::firstOrCreate(['name' => $roleName]);
+            Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
         }
 
         // Create admin user
@@ -36,6 +36,15 @@ class DatabaseSeeder extends Seeder
             ]
         );
         $admin->assignRole('ADMIN');
+
+        // Assign all permissions to ADMIN role (will be done by MenuPermissionSeeder, but ensure it here too)
+        $adminRole = Role::where('name', 'ADMIN')->first();
+        if ($adminRole) {
+            $allPermissions = Permission::all();
+            if ($allPermissions->count() > 0) {
+                $adminRole->syncPermissions($allPermissions);
+            }
+        }
 
         // Create demo farm
         $farm = Farm::firstOrCreate(

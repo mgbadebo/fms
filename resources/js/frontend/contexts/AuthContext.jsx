@@ -25,24 +25,27 @@ export function AuthProvider({ children }) {
                 return;
             }
 
-            // Try to get user info from localStorage or create a basic user object
-            const userEmail = localStorage.getItem('user_email');
-            const userName = localStorage.getItem('user_name');
-            
-            if (userEmail) {
-                setUser({ 
-                    email: userEmail,
-                    name: userName || userEmail.split('@')[0],
-                });
-            } else {
-                // If no user info, try to validate token by making a test API call
-                try {
-                    const response = await api.get('/api/v1/farms?per_page=1');
-                    // If successful, token is valid - create basic user object
-                    setUser({ email: 'user@fms.test', name: 'User' });
-                } catch (error) {
+            // Fetch user with roles and permissions
+            try {
+                const response = await api.get('/api/v1/me');
+                const userData = response.data?.data || response.data;
+                setUser(userData);
+                localStorage.setItem('user_email', userData.email);
+                localStorage.setItem('user_name', userData.name);
+            } catch (error) {
+                // If /me endpoint fails, try fallback
+                const userEmail = localStorage.getItem('user_email');
+                const userName = localStorage.getItem('user_name');
+                
+                if (userEmail) {
+                    setUser({ 
+                        email: userEmail,
+                        name: userName || userEmail.split('@')[0],
+                    });
+                } else {
                     // Token invalid, logout
                     logout();
+                    return;
                 }
             }
             setLoading(false);
@@ -58,11 +61,22 @@ export function AuthProvider({ children }) {
             const { token: newToken, user: userData } = response.data;
             
             setToken(newToken);
-            setUser(userData);
             localStorage.setItem('token', newToken);
-            localStorage.setItem('user_email', userData.email || email);
-            localStorage.setItem('user_name', userData.name || email.split('@')[0]);
             api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+            
+            // Fetch full user data with roles and permissions
+            try {
+                const userResponse = await api.get('/api/v1/me');
+                const fullUserData = userResponse.data?.data || userResponse.data;
+                setUser(fullUserData);
+                localStorage.setItem('user_email', fullUserData.email || email);
+                localStorage.setItem('user_name', fullUserData.name || email.split('@')[0]);
+            } catch (error) {
+                // Fallback to basic user data
+                setUser(userData || { email, name: email.split('@')[0] });
+                localStorage.setItem('user_email', userData?.email || email);
+                localStorage.setItem('user_name', userData?.name || email.split('@')[0]);
+            }
             
             return { success: true };
         } catch (error) {

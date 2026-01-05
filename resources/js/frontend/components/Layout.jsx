@@ -23,6 +23,7 @@ import {
     MapPin,
     Layers,
     Settings,
+    Shield,
 } from 'lucide-react';
 
 export default function Layout({ children }) {
@@ -30,13 +31,14 @@ export default function Layout({ children }) {
     const location = useLocation();
     const navigate = useNavigate();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [userPermissions, setUserPermissions] = useState([]);
     
-    // Auto-expand groups based on current route
+    // Auto-expand groups based on current route - all collapsed by default
     const getInitialExpandedGroups = () => {
         const path = location.pathname;
         return {
             gari: path.startsWith('/gari'),
-            bellPepper: true, // Always expanded by default for easy access
+            bellPepper: path.startsWith('/bell-pepper') || path.startsWith('/greenhouses') || path.startsWith('/boreholes'),
             tomatoes: path.startsWith('/tomatoes'),
             habaneros: path.startsWith('/habaneros'),
             livestock: false,
@@ -56,6 +58,16 @@ export default function Layout({ children }) {
             habaneros: path.startsWith('/habaneros') ? true : prev.habaneros,
         }));
     }, [location.pathname]);
+
+    // Load user permissions on mount
+    useEffect(() => {
+        if (user) {
+            // Get permissions from user object or fetch them
+            const permissions = user.permissions?.map(p => p.name) || 
+                              user.roles?.flatMap(r => r.permissions?.map(p => p.name) || []) || [];
+            setUserPermissions(permissions);
+        }
+    }, [user]);
 
     const handleLogout = () => {
         logout();
@@ -143,9 +155,27 @@ export default function Layout({ children }) {
             items: [
                 { name: 'Locations', href: '/admin/locations', icon: MapPin },
                 { name: 'Admin Zones', href: '/admin/admin-zones', icon: Layers },
+                { name: 'Roles', href: '/admin/roles', icon: Shield },
+                { name: 'Users', href: '/admin/users', icon: Users },
             ],
         },
     ];
+
+    // Check if user has permission for a menu/submenu
+    const hasPermission = (menuKey, submenuKey, permissionType = 'view') => {
+        // Admin has all permissions
+        if (user?.roles?.some(r => r.name === 'ADMIN')) {
+            return true;
+        }
+
+        const permissionName = [menuKey, submenuKey, permissionType].filter(Boolean).join('.');
+        return userPermissions.includes(permissionName);
+    };
+
+    // Check if user can access a menu item
+    const canAccessMenuItem = (menuKey, submenuKey) => {
+        return hasPermission(menuKey, submenuKey, 'view');
+    };
 
     const isActive = (href) => {
         if (href === '/') {
@@ -158,7 +188,56 @@ export default function Layout({ children }) {
         return group.items.some(item => isActive(item.href));
     };
 
+    // Map href to menu/submenu keys for permission checking
+    const getMenuKeys = (href) => {
+        const menuMap = {
+            '/': { menu: 'general', submenu: null },
+            '/farms': { menu: 'general', submenu: 'farms' },
+            '/harvest-lots': { menu: 'general', submenu: 'harvest-lots' },
+            '/scale-devices': { menu: 'general', submenu: 'scale-devices' },
+            '/label-templates': { menu: 'general', submenu: 'label-templates' },
+            '/staff-labor': { menu: 'general', submenu: 'staff-labor' },
+            '/gari-production-batches': { menu: 'gari', submenu: 'production-batches' },
+            '/gari-inventory': { menu: 'gari', submenu: 'inventory' },
+            '/gari-sales': { menu: 'gari', submenu: 'sales' },
+            '/gari-kpis': { menu: 'gari', submenu: 'kpis' },
+            '/gari-waste-losses': { menu: 'gari', submenu: 'waste-losses' },
+            '/packaging-materials': { menu: 'gari', submenu: 'packaging-materials' },
+            '/greenhouses': { menu: 'bell-pepper', submenu: 'greenhouses' },
+            '/boreholes': { menu: 'bell-pepper', submenu: 'boreholes' },
+            '/bell-pepper-production': { menu: 'bell-pepper', submenu: 'production' },
+            '/bell-pepper-harvests': { menu: 'bell-pepper', submenu: 'harvests' },
+            '/bell-pepper-inventory': { menu: 'bell-pepper', submenu: 'inventory' },
+            '/bell-pepper-sales': { menu: 'bell-pepper', submenu: 'sales' },
+            '/bell-pepper-kpis': { menu: 'bell-pepper', submenu: 'kpis' },
+            '/tomatoes-production': { menu: 'tomatoes', submenu: 'production' },
+            '/tomatoes-inventory': { menu: 'tomatoes', submenu: 'inventory' },
+            '/tomatoes-sales': { menu: 'tomatoes', submenu: 'sales' },
+            '/tomatoes-kpis': { menu: 'tomatoes', submenu: 'kpis' },
+            '/habaneros-production': { menu: 'habaneros', submenu: 'production' },
+            '/habaneros-inventory': { menu: 'habaneros', submenu: 'inventory' },
+            '/habaneros-sales': { menu: 'habaneros', submenu: 'sales' },
+            '/habaneros-kpis': { menu: 'habaneros', submenu: 'kpis' },
+            '/reports/consolidated-sales': { menu: 'reports', submenu: 'consolidated-sales' },
+            '/reports/consolidated-expenses': { menu: 'reports', submenu: 'consolidated-expenses' },
+            '/reports/staff-allocation': { menu: 'reports', submenu: 'staff-allocation' },
+            '/admin/locations': { menu: 'admin', submenu: 'locations' },
+            '/admin/admin-zones': { menu: 'admin', submenu: 'admin-zones' },
+            '/admin/roles': { menu: 'admin', submenu: 'roles' },
+            '/admin/users': { menu: 'admin', submenu: 'users' },
+        };
+
+        return menuMap[href] || { menu: null, submenu: null };
+    };
+
     const renderNavItem = (item) => {
+        const { menu, submenu } = getMenuKeys(item.href);
+        
+        // Check permission - allow dashboard for all authenticated users
+        if (item.href !== '/' && !canAccessMenuItem(menu, submenu)) {
+            return null;
+        }
+
         const active = isActive(item.href);
         return (
             <Link
@@ -229,13 +308,13 @@ export default function Layout({ children }) {
         <div className="min-h-screen bg-gray-50">
             {/* Sidebar */}
             <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
-                <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
+                <div className="flex flex-col h-full bg-white border-r border-gray-200">
                     <div className="flex items-center flex-shrink-0 px-4 py-6 border-b border-gray-200">
                         <Tractor className="h-8 w-8 text-green-600" />
                         <h1 className="ml-2 text-xl font-bold text-gray-900">FMS</h1>
                     </div>
-                    <div className="flex-grow flex flex-col overflow-y-auto">
-                        <nav className="flex-1 px-2 py-4 space-y-2">
+                    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                        <nav className="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
                             {navigationGroups.map(renderNavGroup)}
                         </nav>
                     </div>

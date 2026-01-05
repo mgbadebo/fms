@@ -26,6 +26,8 @@ use App\Http\Controllers\Api\V1\BellPepperSaleController;
 use App\Http\Controllers\Api\V1\BoreholeController;
 use App\Http\Controllers\Api\V1\LocationController;
 use App\Http\Controllers\Api\V1\AdminZoneController;
+use App\Http\Controllers\Api\V1\RoleController;
+use App\Http\Controllers\Api\V1\UserManagementController;
 
 Route::prefix('v1')->group(function () {
     // Public authentication routes
@@ -44,6 +46,7 @@ Route::prefix('v1')->group(function () {
         }
 
         $token = $user->createToken('api-token')->plainTextToken;
+        $user->load('roles.permissions', 'permissions');
 
         return response()->json([
             'user' => $user,
@@ -74,6 +77,12 @@ Route::prefix('v1')->group(function () {
     
     // Protected routes (require authentication)
     Route::middleware('auth:sanctum')->group(function () {
+        // Get current user with roles and permissions
+        Route::get('/me', function (Illuminate\Http\Request $request) {
+            $user = $request->user();
+            $user->load('roles.permissions', 'permissions');
+            return response()->json(['data' => $user]);
+        });
         // Farms
         Route::apiResource('farms', FarmController::class);
         
@@ -138,6 +147,11 @@ Route::prefix('v1')->group(function () {
         // Admin Settings - Locations and Zones
         Route::apiResource('locations', LocationController::class);
         Route::apiResource('admin-zones', AdminZoneController::class);
+        
+        // Role and User Management (Admin only)
+        Route::get('roles/menu-permissions', [RoleController::class, 'menuPermissions']);
+        Route::apiResource('roles', RoleController::class);
+        Route::apiResource('users', UserManagementController::class);
     });
 });
 

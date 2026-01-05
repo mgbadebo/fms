@@ -28,6 +28,8 @@ import BellPepperCycleDetail from './pages/BellPepperCycleDetail';
 import BellPepperHarvests from './pages/BellPepperHarvests';
 import Locations from './pages/Locations';
 import AdminZones from './pages/AdminZones';
+import Roles from './pages/Roles';
+import Users from './pages/Users';
 import Layout from './components/Layout';
 
 function PrivateRoute({ children }) {
@@ -106,6 +108,8 @@ function App() {
                                     {/* Admin Settings */}
                                     <Route path="/admin/locations" element={<Locations />} />
                                     <Route path="/admin/admin-zones" element={<AdminZones />} />
+                                    <Route path="/admin/roles" element={<Roles />} />
+                                    <Route path="/admin/users" element={<Users />} />
                                 </Routes>
                             </Layout>
                         </PrivateRoute>
