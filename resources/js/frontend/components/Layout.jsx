@@ -86,10 +86,7 @@ export default function Layout({ children }) {
             name: 'General',
             items: [
                 { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-                { name: 'Farms', href: '/farms', icon: Tractor },
                 { name: 'Harvest Lots', href: '/harvest-lots', icon: Package },
-                { name: 'Scale Devices', href: '/scale-devices', icon: Scale },
-                { name: 'Label Templates', href: '/label-templates', icon: Tag },
                 { name: 'Staff & Labor', href: '/staff-labor', icon: Users },
             ],
         },
@@ -153,6 +150,9 @@ export default function Layout({ children }) {
         {
             name: 'Admin Settings',
             items: [
+                { name: 'Farms', href: '/farms', icon: Tractor },
+                { name: 'Scale Devices', href: '/scale-devices', icon: Scale },
+                { name: 'Label Templates', href: '/label-templates', icon: Tag },
                 { name: 'Locations', href: '/admin/locations', icon: MapPin },
                 { name: 'Admin Zones', href: '/admin/admin-zones', icon: Layers },
                 { name: 'Roles', href: '/admin/roles', icon: Shield },
@@ -192,11 +192,11 @@ export default function Layout({ children }) {
     const getMenuKeys = (href) => {
         const menuMap = {
             '/': { menu: 'general', submenu: null },
-            '/farms': { menu: 'general', submenu: 'farms' },
             '/harvest-lots': { menu: 'general', submenu: 'harvest-lots' },
-            '/scale-devices': { menu: 'general', submenu: 'scale-devices' },
-            '/label-templates': { menu: 'general', submenu: 'label-templates' },
             '/staff-labor': { menu: 'general', submenu: 'staff-labor' },
+            '/farms': { menu: 'admin', submenu: 'farms' },
+            '/scale-devices': { menu: 'admin', submenu: 'scale-devices' },
+            '/label-templates': { menu: 'admin', submenu: 'label-templates' },
             '/gari-production-batches': { menu: 'gari', submenu: 'production-batches' },
             '/gari-inventory': { menu: 'gari', submenu: 'inventory' },
             '/gari-sales': { menu: 'gari', submenu: 'sales' },
