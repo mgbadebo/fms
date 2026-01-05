@@ -28,6 +28,11 @@ use App\Http\Controllers\Api\V1\LocationController;
 use App\Http\Controllers\Api\V1\AdminZoneController;
 use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\UserManagementController;
+use App\Http\Controllers\Api\V1\SiteController;
+use App\Http\Controllers\Api\V1\FarmZoneController;
+use App\Http\Controllers\Api\V1\FactoryController;
+use App\Http\Controllers\Api\V1\StaffAssignmentController;
+use App\Http\Controllers\Api\V1\WorkerController;
 
 Route::prefix('v1')->group(function () {
     // Public authentication routes
@@ -152,6 +157,22 @@ Route::prefix('v1')->group(function () {
         Route::get('roles/menu-permissions', [RoleController::class, 'menuPermissions']);
         Route::apiResource('roles', RoleController::class);
         Route::apiResource('users', UserManagementController::class);
+        
+        // Site Management (Admin only)
+        Route::apiResource('sites', SiteController::class);
+        
+        // Farm Zone Management (Admin only)
+        Route::apiResource('farm-zones', FarmZoneController::class);
+        
+        // Factory Management (Admin only)
+        Route::apiResource('factories', FactoryController::class);
+        
+        // Staff Assignment Management (Admin only)
+        Route::post('staff-assignments/{id}/end', [StaffAssignmentController::class, 'endAssignment']);
+        Route::apiResource('staff-assignments', StaffAssignmentController::class);
+        
+        // Worker Management
+        Route::apiResource('workers', WorkerController::class);
     });
 });
 

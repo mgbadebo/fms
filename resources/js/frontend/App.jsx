@@ -27,6 +27,10 @@ import BellPepperProduction from './pages/BellPepperProduction';
 import BellPepperCycleDetail from './pages/BellPepperCycleDetail';
 import BellPepperHarvests from './pages/BellPepperHarvests';
 import Locations from './pages/Locations';
+import Sites from './pages/Sites';
+import FarmZones from './pages/FarmZones';
+import Factories from './pages/Factories';
+import StaffAssignments from './pages/StaffAssignments';
 import AdminZones from './pages/AdminZones';
 import Roles from './pages/Roles';
 import Users from './pages/Users';
@@ -108,6 +112,10 @@ function App() {
                                     {/* Admin Settings */}
                                     <Route path="/admin/locations" element={<Locations />} />
                                     <Route path="/admin/admin-zones" element={<AdminZones />} />
+                                    <Route path="/admin/sites" element={<Sites />} />
+                                    <Route path="/admin/farm-zones" element={<FarmZones />} />
+                                    <Route path="/admin/factories" element={<Factories />} />
+                                    <Route path="/admin/staff-assignments" element={<StaffAssignments />} />
                                     <Route path="/admin/roles" element={<Roles />} />
                                     <Route path="/admin/users" element={<Users />} />
                                 </Routes>

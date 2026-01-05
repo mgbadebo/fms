@@ -45,4 +45,20 @@ class Worker extends Model
     {
         return $this->hasMany(TaskLog::class);
     }
+
+    // Staff assignments (can be assigned to Sites, Factories, Greenhouses, FarmZones)
+    public function staffAssignments()
+    {
+        return $this->hasMany(StaffAssignment::class);
+    }
+
+    // Current assignments only
+    public function currentAssignments()
+    {
+        return $this->hasMany(StaffAssignment::class)->where('is_current', true)
+            ->where(function($q) {
+                $q->whereNull('assigned_to')
+                  ->orWhere('assigned_to', '>=', now());
+            });
+    }
 }

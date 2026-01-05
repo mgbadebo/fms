@@ -24,6 +24,10 @@ import {
     Layers,
     Settings,
     Shield,
+    Grid3x3,
+    Building2,
+    UserCheck,
+    Warehouse,
 } from 'lucide-react';
 
 export default function Layout({ children }) {
@@ -151,8 +155,12 @@ export default function Layout({ children }) {
             name: 'Admin Settings',
             items: [
                 { name: 'Farms', href: '/farms', icon: Tractor },
+                { name: 'Sites', href: '/admin/sites', icon: Warehouse },
+                { name: 'Farm Zones', href: '/admin/farm-zones', icon: Grid3x3 },
+                { name: 'Factories', href: '/admin/factories', icon: Building2 },
                 { name: 'Scale Devices', href: '/scale-devices', icon: Scale },
                 { name: 'Label Templates', href: '/label-templates', icon: Tag },
+                { name: 'Staff Assignments', href: '/admin/staff-assignments', icon: UserCheck },
                 { name: 'Locations', href: '/admin/locations', icon: MapPin },
                 { name: 'Admin Zones', href: '/admin/admin-zones', icon: Layers },
                 { name: 'Roles', href: '/admin/roles', icon: Shield },
@@ -223,6 +231,10 @@ export default function Layout({ children }) {
             '/reports/staff-allocation': { menu: 'reports', submenu: 'staff-allocation' },
             '/admin/locations': { menu: 'admin', submenu: 'locations' },
             '/admin/admin-zones': { menu: 'admin', submenu: 'admin-zones' },
+            '/admin/sites': { menu: 'admin', submenu: 'sites' },
+            '/admin/farm-zones': { menu: 'admin', submenu: 'farm-zones' },
+            '/admin/factories': { menu: 'admin', submenu: 'factories' },
+            '/admin/staff-assignments': { menu: 'admin', submenu: 'staff-assignments' },
             '/admin/roles': { menu: 'admin', submenu: 'roles' },
             '/admin/users': { menu: 'admin', submenu: 'users' },
         };

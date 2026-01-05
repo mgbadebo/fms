@@ -103,6 +103,14 @@ class Farm extends Model
     }
 
     /**
+     * Get the sites for this farm.
+     */
+    public function sites()
+    {
+        return $this->hasMany(Site::class);
+    }
+
+    /**
      * Get the input items for this farm.
      */
     public function inputItems()

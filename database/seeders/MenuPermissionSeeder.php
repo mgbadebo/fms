@@ -89,6 +89,18 @@ class MenuPermissionSeeder extends Seeder
             ['menu_key' => 'admin', 'submenu_key' => 'users', 'permission_type' => 'view', 'name' => 'View Users', 'description' => 'View users', 'sort_order' => 70],
             ['menu_key' => 'admin', 'submenu_key' => 'users', 'permission_type' => 'create', 'name' => 'Create Users', 'description' => 'Create new users', 'sort_order' => 71],
             ['menu_key' => 'admin', 'submenu_key' => 'users', 'permission_type' => 'update', 'name' => 'Update Users', 'description' => 'Update existing users', 'sort_order' => 72],
+            ['menu_key' => 'admin', 'submenu_key' => 'sites', 'permission_type' => 'view', 'name' => 'View Sites', 'description' => 'View sites', 'sort_order' => 80],
+            ['menu_key' => 'admin', 'submenu_key' => 'sites', 'permission_type' => 'create', 'name' => 'Create Sites', 'description' => 'Create new sites', 'sort_order' => 81],
+            ['menu_key' => 'admin', 'submenu_key' => 'sites', 'permission_type' => 'update', 'name' => 'Update Sites', 'description' => 'Update existing sites', 'sort_order' => 82],
+            ['menu_key' => 'admin', 'submenu_key' => 'farm-zones', 'permission_type' => 'view', 'name' => 'View Farm Zones', 'description' => 'View farm zones', 'sort_order' => 90],
+            ['menu_key' => 'admin', 'submenu_key' => 'farm-zones', 'permission_type' => 'create', 'name' => 'Create Farm Zones', 'description' => 'Create new farm zones', 'sort_order' => 91],
+            ['menu_key' => 'admin', 'submenu_key' => 'farm-zones', 'permission_type' => 'update', 'name' => 'Update Farm Zones', 'description' => 'Update existing farm zones', 'sort_order' => 92],
+            ['menu_key' => 'admin', 'submenu_key' => 'factories', 'permission_type' => 'view', 'name' => 'View Factories', 'description' => 'View factories', 'sort_order' => 100],
+            ['menu_key' => 'admin', 'submenu_key' => 'factories', 'permission_type' => 'create', 'name' => 'Create Factories', 'description' => 'Create new factories', 'sort_order' => 101],
+            ['menu_key' => 'admin', 'submenu_key' => 'factories', 'permission_type' => 'update', 'name' => 'Update Factories', 'description' => 'Update existing factories', 'sort_order' => 102],
+            ['menu_key' => 'admin', 'submenu_key' => 'staff-assignments', 'permission_type' => 'view', 'name' => 'View Staff Assignments', 'description' => 'View staff assignments', 'sort_order' => 110],
+            ['menu_key' => 'admin', 'submenu_key' => 'staff-assignments', 'permission_type' => 'create', 'name' => 'Create Staff Assignments', 'description' => 'Create new staff assignments', 'sort_order' => 111],
+            ['menu_key' => 'admin', 'submenu_key' => 'staff-assignments', 'permission_type' => 'update', 'name' => 'Update Staff Assignments', 'description' => 'Update existing staff assignments', 'sort_order' => 112],
         ];
 
         foreach ($menuPermissions as $menuPermission) {

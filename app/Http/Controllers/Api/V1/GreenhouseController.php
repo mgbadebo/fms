@@ -12,10 +12,18 @@ class GreenhouseController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Greenhouse::with(['farm', 'boreholes', 'location']);
+        $query = Greenhouse::with(['farm', 'site', 'boreholes', 'location']);
 
         if ($request->has('farm_id')) {
             $query->where('farm_id', $request->farm_id);
+        }
+
+        if ($request->has('site_id')) {
+            $query->where('site_id', $request->site_id);
+        }
+
+        if ($request->has('kit_id')) {
+            $query->where('kit_id', $request->kit_id);
         }
 
         if ($request->has('is_active')) {
@@ -30,7 +38,10 @@ class GreenhouseController extends Controller
     {
         $validated = $request->validate([
             'farm_id' => 'required|exists:farms,id',
+            'site_id' => 'nullable|exists:sites,id',
             'name' => 'required|string|max:255',
+            'kit_id' => 'nullable|string|max:255',
+            'kit_number' => 'nullable|string|max:255',
             'size_sqm' => 'required|numeric|min:0',
             'built_date' => 'required|date',
             'construction_cost' => 'required|numeric|min:0',
@@ -62,12 +73,12 @@ class GreenhouseController extends Controller
             $greenhouse->boreholes()->attach($boreholeIds);
         }
 
-        return response()->json(['data' => $greenhouse->load('farm', 'boreholes')], 201);
+        return response()->json(['data' => $greenhouse->load('farm', 'site', 'boreholes')], 201);
     }
 
     public function show(string $id): JsonResponse
     {
-        $greenhouse = Greenhouse::with(['farm', 'bellPepperCycles', 'boreholes', 'location'])->findOrFail($id);
+        $greenhouse = Greenhouse::with(['farm', 'site', 'bellPepperCycles', 'boreholes', 'location'])->findOrFail($id);
         return response()->json(['data' => $greenhouse]);
     }
 
@@ -76,7 +87,10 @@ class GreenhouseController extends Controller
         $greenhouse = Greenhouse::findOrFail($id);
 
         $validated = $request->validate([
+            'site_id' => 'nullable|exists:sites,id',
             'name' => 'sometimes|string|max:255',
+            'kit_id' => 'nullable|string|max:255',
+            'kit_number' => 'nullable|string|max:255',
             'size_sqm' => 'sometimes|numeric|min:0',
             'built_date' => 'sometimes|date',
             'construction_cost' => 'sometimes|numeric|min:0',
@@ -101,7 +115,7 @@ class GreenhouseController extends Controller
             $greenhouse->boreholes()->sync($boreholeIds);
         }
 
-        return response()->json(['data' => $greenhouse->load('farm', 'boreholes', 'location')]);
+        return response()->json(['data' => $greenhouse->load('farm', 'site', 'boreholes', 'location')]);
     }
 
     public function destroy(string $id): JsonResponse

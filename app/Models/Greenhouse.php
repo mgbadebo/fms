@@ -12,7 +12,10 @@ class Greenhouse extends Model
 
     protected $fillable = [
         'farm_id',
+        'site_id',
         'code',
+        'kit_id',
+        'kit_number',
         'name',
         'size_sqm',
         'built_date',
@@ -37,6 +40,17 @@ class Greenhouse extends Model
     public function farm()
     {
         return $this->belongsTo(Farm::class);
+    }
+
+    public function site()
+    {
+        return $this->belongsTo(Site::class);
+    }
+
+    // Staff assignments to this greenhouse
+    public function staffAssignments()
+    {
+        return $this->morphMany(StaffAssignment::class, 'assignable');
     }
 
     public function bellPepperCycles()
