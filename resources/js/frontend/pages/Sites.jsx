@@ -5,7 +5,6 @@ import { Warehouse, Plus, Edit, Trash2 } from 'lucide-react';
 export default function Sites() {
     const [sites, setSites] = useState([]);
     const [farms, setFarms] = useState([]);
-    const [locations, setLocations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingSite, setEditingSite] = useState(null);
@@ -14,17 +13,19 @@ export default function Sites() {
         name: '',
         code: '',
         type: 'farmland',
-        location_id: '',
         description: '',
+        address: '',
+        latitude: '',
+        longitude: '',
         total_area: '',
         area_unit: 'hectares',
+        notes: '',
         is_active: true,
     });
 
     useEffect(() => {
         fetchData();
         fetchFarms();
-        fetchLocations();
     }, []);
 
     const fetchData = async () => {
@@ -44,22 +45,35 @@ export default function Sites() {
     const fetchFarms = async () => {
         try {
             const response = await api.get('/api/v1/farms?per_page=1000');
-            const data = response.data?.data || (Array.isArray(response.data) ? response.data : []);
-            setFarms(Array.isArray(data) ? data : []);
+            console.log('Farms API full response:', response); // Debug log
+            console.log('Farms API response.data:', response.data); // Debug log
+            // Handle paginated response - Laravel pagination returns data in response.data.data
+            let farmsData = [];
+            // Laravel paginator returns: { data: [...], current_page: 1, per_page: 20, ... }
+            if (response.data?.data && Array.isArray(response.data.data)) {
+                farmsData = response.data.data;
+            } else if (Array.isArray(response.data)) {
+                // If response.data is directly an array
+                farmsData = response.data;
+            } else if (response.data && typeof response.data === 'object') {
+                // Try to extract array from object
+                const keys = Object.keys(response.data);
+                if (keys.includes('data') && Array.isArray(response.data.data)) {
+                    farmsData = response.data.data;
+                } else {
+                    // Maybe it's an object with numeric keys?
+                    farmsData = Object.values(response.data).filter(item => item && typeof item === 'object' && item.id);
+                }
+            }
+            console.log('Farms parsed:', farmsData.length, farmsData); // Debug log
+            setFarms(farmsData);
         } catch (error) {
             console.error('Error fetching farms:', error);
+            console.error('Error response:', error.response); // More detailed error
+            setFarms([]);
         }
     };
 
-    const fetchLocations = async () => {
-        try {
-            const response = await api.get('/api/v1/locations?per_page=1000');
-            const data = response.data?.data || (Array.isArray(response.data) ? response.data : []);
-            setLocations(Array.isArray(data) ? data : []);
-        } catch (error) {
-            console.error('Error fetching locations:', error);
-        }
-    };
 
     const handleModalOpen = () => {
         setEditingSite(null);
@@ -68,10 +82,13 @@ export default function Sites() {
             name: '',
             code: '',
             type: 'farmland',
-            location_id: '',
             description: '',
+            address: '',
+            latitude: '',
+            longitude: '',
             total_area: '',
             area_unit: 'hectares',
+            notes: '',
             is_active: true,
         });
         setShowModal(true);
@@ -84,10 +101,13 @@ export default function Sites() {
             name: site.name || '',
             code: site.code || '',
             type: site.type || 'farmland',
-            location_id: site.location_id || '',
             description: site.description || '',
+            address: site.address || '',
+            latitude: site.latitude || '',
+            longitude: site.longitude || '',
             total_area: site.total_area || '',
             area_unit: site.area_unit || 'hectares',
+            notes: site.notes || '',
             is_active: site.is_active !== undefined ? site.is_active : true,
         });
         setShowModal(true);
@@ -126,6 +146,7 @@ export default function Sites() {
             warehouse: 'Warehouse',
             factory: 'Factory',
             greenhouse: 'Greenhouse',
+            estate: 'Estate',
         };
         return types[type] || type;
     };
@@ -204,9 +225,8 @@ export default function Sites() {
                         <form onSubmit={handleSubmit}>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Farm *</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Farm</label>
                                     <select
-                                        required
                                         value={formData.farm_id}
                                         onChange={(e) => setFormData({ ...formData, farm_id: e.target.value })}
                                         className="w-full border border-gray-300 rounded-lg px-3 py-2"
@@ -229,6 +249,7 @@ export default function Sites() {
                                         <option value="warehouse">Warehouse</option>
                                         <option value="factory">Factory</option>
                                         <option value="greenhouse">Greenhouse</option>
+                                        <option value="estate">Estate</option>
                                     </select>
                                 </div>
                                 <div>
@@ -251,18 +272,34 @@ export default function Sites() {
                                         placeholder="Auto-generated if not provided"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                                    <select
-                                        value={formData.location_id}
-                                        onChange={(e) => setFormData({ ...formData, location_id: e.target.value || null })}
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                    <textarea
+                                        value={formData.address}
+                                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                                         className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                                    >
-                                        <option value="">Select Location</option>
-                                        {locations.map((location) => (
-                                            <option key={location.id} value={location.id}>{location.name}</option>
-                                        ))}
-                                    </select>
+                                        rows="2"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+                                    <input
+                                        type="number"
+                                        step="any"
+                                        value={formData.latitude}
+                                        onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+                                    <input
+                                        type="number"
+                                        step="any"
+                                        value={formData.longitude}
+                                        onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Total Area</label>
@@ -295,6 +332,15 @@ export default function Sites() {
                                         rows="3"
                                     />
                                 </div>
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                                    <textarea
+                                        value={formData.notes}
+                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                        rows="2"
+                                    />
+                                </div>
                                 <div>
                                     <label className="flex items-center gap-2">
                                         <input
@@ -324,8 +370,7 @@ export default function Sites() {
                             </form>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
         </div>
     );
 }

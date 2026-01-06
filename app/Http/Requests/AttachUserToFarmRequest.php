@@ -1,0 +1,28 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class AttachUserToFarmRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        $user = $this->user();
+        return $user && ($user->hasRole('ADMIN') || $user->can('users.manage_membership'));
+    }
+
+    public function rules(): array
+    {
+        return [
+            'farm_id' => 'required|exists:farms,id',
+            'membership_status' => 'required|in:ACTIVE,INACTIVE',
+            'employment_category' => 'nullable|in:PERMANENT,CASUAL,CONTRACTOR,SEASONAL',
+            'pay_type' => 'nullable|in:MONTHLY,DAILY,HOURLY,TASK',
+            'pay_rate' => 'nullable|numeric|min:0',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after:start_date',
+            'notes' => 'nullable|string',
+        ];
+    }
+}

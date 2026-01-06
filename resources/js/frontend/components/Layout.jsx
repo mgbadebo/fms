@@ -28,6 +28,9 @@ import {
     Building2,
     UserCheck,
     Warehouse,
+    Wrench,
+    FolderTree,
+    Briefcase,
 } from 'lucide-react';
 
 export default function Layout({ children }) {
@@ -87,14 +90,6 @@ export default function Layout({ children }) {
 
     const navigationGroups = [
         {
-            name: 'General',
-            items: [
-                { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-                { name: 'Harvest Lots', href: '/harvest-lots', icon: Package },
-                { name: 'Staff & Labor', href: '/staff-labor', icon: Users },
-            ],
-        },
-        {
             name: 'Gari',
             key: 'gari',
             icon: Factory,
@@ -146,6 +141,7 @@ export default function Layout({ children }) {
         {
             name: 'Reports',
             items: [
+                { name: 'Dashboard', href: '/', icon: LayoutDashboard },
                 { name: 'Consolidated Sales', href: '/reports/consolidated-sales', icon: DollarSign },
                 { name: 'Consolidated Expenses', href: '/reports/consolidated-expenses', icon: BarChart3 },
                 { name: 'Staff Allocation', href: '/reports/staff-allocation', icon: Users },
@@ -160,8 +156,10 @@ export default function Layout({ children }) {
                 { name: 'Factories', href: '/admin/factories', icon: Building2 },
                 { name: 'Scale Devices', href: '/scale-devices', icon: Scale },
                 { name: 'Label Templates', href: '/label-templates', icon: Tag },
-                { name: 'Staff Assignments', href: '/admin/staff-assignments', icon: UserCheck },
-                { name: 'Locations', href: '/admin/locations', icon: MapPin },
+                { name: 'Crops', href: '/admin/crops', icon: Sprout },
+                { name: 'Worker Job Roles', href: '/admin/worker-job-roles', icon: Briefcase },
+                { name: 'Assets', href: '/admin/assets', icon: Wrench },
+                { name: 'Asset Categories', href: '/admin/asset-categories', icon: FolderTree },
                 { name: 'Admin Zones', href: '/admin/admin-zones', icon: Layers },
                 { name: 'Roles', href: '/admin/roles', icon: Shield },
                 { name: 'Users', href: '/admin/users', icon: Users },
@@ -199,9 +197,7 @@ export default function Layout({ children }) {
     // Map href to menu/submenu keys for permission checking
     const getMenuKeys = (href) => {
         const menuMap = {
-            '/': { menu: 'general', submenu: null },
-            '/harvest-lots': { menu: 'general', submenu: 'harvest-lots' },
-            '/staff-labor': { menu: 'general', submenu: 'staff-labor' },
+            '/': { menu: 'reports', submenu: 'dashboard' },
             '/farms': { menu: 'admin', submenu: 'farms' },
             '/scale-devices': { menu: 'admin', submenu: 'scale-devices' },
             '/label-templates': { menu: 'admin', submenu: 'label-templates' },
@@ -229,12 +225,14 @@ export default function Layout({ children }) {
             '/reports/consolidated-sales': { menu: 'reports', submenu: 'consolidated-sales' },
             '/reports/consolidated-expenses': { menu: 'reports', submenu: 'consolidated-expenses' },
             '/reports/staff-allocation': { menu: 'reports', submenu: 'staff-allocation' },
-            '/admin/locations': { menu: 'admin', submenu: 'locations' },
             '/admin/admin-zones': { menu: 'admin', submenu: 'admin-zones' },
             '/admin/sites': { menu: 'admin', submenu: 'sites' },
             '/admin/farm-zones': { menu: 'admin', submenu: 'farm-zones' },
             '/admin/factories': { menu: 'admin', submenu: 'factories' },
-            '/admin/staff-assignments': { menu: 'admin', submenu: 'staff-assignments' },
+            '/admin/crops': { menu: 'admin', submenu: 'crops' },
+            '/admin/worker-job-roles': { menu: 'admin', submenu: 'worker-job-roles' },
+            '/admin/assets': { menu: 'admin', submenu: 'assets' },
+            '/admin/asset-categories': { menu: 'admin', submenu: 'asset-categories' },
             '/admin/roles': { menu: 'admin', submenu: 'roles' },
             '/admin/users': { menu: 'admin', submenu: 'users' },
         };
@@ -245,8 +243,8 @@ export default function Layout({ children }) {
     const renderNavItem = (item) => {
         const { menu, submenu } = getMenuKeys(item.href);
         
-        // Check permission - allow dashboard for all authenticated users
-        if (item.href !== '/' && !canAccessMenuItem(menu, submenu)) {
+        // Check permission for all menu items including dashboard
+        if (!canAccessMenuItem(menu, submenu)) {
             return null;
         }
 

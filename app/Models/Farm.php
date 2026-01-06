@@ -11,8 +11,21 @@ class Farm extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'farm_code',
         'name',
-        'location_id',
+        'legal_name',
+        'farm_type',
+        'country',
+        'state',
+        'town',
+        'default_currency',
+        'default_unit_system',
+        'default_timezone',
+        'accounting_method',
+        'status',
+        'created_by',
+        'meta',
+        'site_id',
         'admin_zone_id',
         'description',
         'total_area',
@@ -25,9 +38,37 @@ class Farm extends Model
     {
         return [
             'metadata' => 'array',
+            'meta' => 'array',
             'is_active' => 'boolean',
             'total_area' => 'decimal:2',
         ];
+    }
+    
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($farm) {
+            // Auto-generate farm_code if not provided
+            if (empty($farm->farm_code)) {
+                $farm->farm_code = app(\App\Services\Farm\FarmCodeGeneratorService::class)->generate();
+            }
+            
+            // Set created_by if not provided and user is authenticated
+            if (empty($farm->created_by) && auth()->check()) {
+                $farm->created_by = auth()->id();
+            }
+        });
+        
+        static::updating(function ($farm) {
+            // Auto-generate farm_code if missing (for existing farms created before this field was added)
+            if (empty($farm->farm_code)) {
+                $farm->farm_code = app(\App\Services\Farm\FarmCodeGeneratorService::class)->generate();
+            }
+        });
     }
 
     /**
@@ -110,6 +151,15 @@ class Farm extends Model
         return $this->hasMany(Site::class);
     }
 
+
+    /**
+     * Get active worker job roles for this farm.
+     */
+    public function activeWorkerJobRoles()
+    {
+        return $this->hasMany(WorkerJobRole::class)->where('is_active', true);
+    }
+
     /**
      * Get the input items for this farm.
      */
@@ -131,7 +181,15 @@ class Farm extends Model
      */
     public function location()
     {
-        return $this->belongsTo(Location::class);
+        return $this->belongsTo(Site::class);
+    }
+
+    /**
+     * Get the site for this farm (alias for location).
+     */
+    public function site()
+    {
+        return $this->belongsTo(Site::class, 'site_id');
     }
 
     /**
@@ -140,5 +198,42 @@ class Farm extends Model
     public function adminZone()
     {
         return $this->belongsTo(AdminZone::class, 'admin_zone_id');
+    }
+    
+    /**
+     * Get the user who created this farm.
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+    
+    /**
+     * Get the assets for this farm.
+     */
+    public function assets()
+    {
+        return $this->hasMany(\App\Models\Asset::class);
+    }
+    
+    /**
+     * Get a formatted location label.
+     *
+     * @return string
+     */
+    public function locationLabel(): string
+    {
+        $parts = array_filter([$this->town, $this->state, $this->country]);
+        return implode(', ', $parts) ?: 'Location not specified';
+    }
+    
+    /**
+     * Check if the farm is active.
+     *
+     * @return bool
+     */
+    public function isActive(): bool
+    {
+        return $this->status === 'ACTIVE' || ($this->status === null && $this->is_active === true);
     }
 }

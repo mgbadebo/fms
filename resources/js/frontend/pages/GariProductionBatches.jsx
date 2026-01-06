@@ -6,10 +6,12 @@ import { Factory, Plus, TrendingUp, Package, DollarSign } from 'lucide-react';
 export default function GariProductionBatches() {
     const [batches, setBatches] = useState([]);
     const [farms, setFarms] = useState([]);
+    const [factories, setFactories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({
         farm_id: '',
+        factory_id: '',
         processing_date: new Date().toISOString().slice(0, 10),
         cassava_source: 'HARVESTED',
         cassava_quantity_tonnes: '',
@@ -61,10 +63,29 @@ export default function GariProductionBatches() {
         }
     };
 
+    const fetchFactories = async (farmId) => {
+        if (!farmId) {
+            setFactories([]);
+            return;
+        }
+        try {
+            const response = await api.get(`/api/v1/factories?farm_id=${farmId}&production_type=gari`);
+            const factoriesData = response.data;
+            const factoriesArray = factoriesData?.data || (Array.isArray(factoriesData) ? factoriesData : []);
+            setFactories(factoriesArray);
+        } catch (error) {
+            console.error('Error fetching factories:', error);
+            setFactories([]);
+        }
+    };
+
     const handleModalOpen = () => {
         setShowModal(true);
         // Refresh farms list when opening modal to get newly created farms
         fetchFarms();
+        // Reset factory selection
+        setFormData(prev => ({ ...prev, factory_id: '' }));
+        setFactories([]);
     };
 
     const handleSubmit = async (e) => {
@@ -75,6 +96,7 @@ export default function GariProductionBatches() {
             setShowModal(false);
             setFormData({
                 farm_id: '',
+                factory_id: '',
                 processing_date: new Date().toISOString().slice(0, 10),
                 cassava_source: 'HARVESTED',
                 cassava_quantity_tonnes: '',
@@ -146,6 +168,7 @@ export default function GariProductionBatches() {
                                     <h3 className="text-lg font-semibold text-gray-900">{batch.batch_code}</h3>
                                     <p className="text-sm text-gray-600">
                                         {new Date(batch.processing_date).toLocaleDateString()} • {batch.farm?.name}
+                                        {batch.factory && ` • ${batch.factory.name}`}
                                     </p>
                                 </div>
                                 <span className={`px-3 py-1 text-xs font-medium rounded ${
@@ -213,12 +236,37 @@ export default function GariProductionBatches() {
                                     <select
                                         required
                                         value={formData.farm_id}
-                                        onChange={(e) => setFormData({ ...formData, farm_id: e.target.value })}
+                                        onChange={(e) => {
+                                            const farmId = e.target.value;
+                                            setFormData({ ...formData, farm_id: farmId, factory_id: '' });
+                                            fetchFactories(farmId);
+                                        }}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
                                     >
                                         <option value="">Select farm</option>
                                         {farms.map((farm) => (
                                             <option key={farm.id} value={farm.id}>{farm.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Factory *</label>
+                                    <select
+                                        required
+                                        value={formData.factory_id}
+                                        onChange={(e) => setFormData({ ...formData, factory_id: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                        disabled={!formData.farm_id || factories.length === 0}
+                                    >
+                                        <option value="">
+                                            {!formData.farm_id 
+                                                ? 'Select farm first' 
+                                                : factories.length === 0 
+                                                    ? 'No factories available' 
+                                                    : 'Select factory'}
+                                        </option>
+                                        {factories.map((factory) => (
+                                            <option key={factory.id} value={factory.id}>{factory.name}</option>
                                         ))}
                                     </select>
                                 </div>

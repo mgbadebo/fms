@@ -29,7 +29,7 @@ class SiteController extends Controller
             return $permissionCheck;
         }
 
-        $query = Site::with(['farm', 'location']);
+        $query = Site::with(['farm']);
 
         if ($request->has('farm_id')) {
             $query->where('farm_id', $request->farm_id);
@@ -55,12 +55,15 @@ class SiteController extends Controller
         }
 
         $validated = $request->validate([
-            'farm_id' => 'required|exists:farms,id',
+            'farm_id' => 'nullable|exists:farms,id',
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|unique:sites,code',
-            'type' => 'required|in:farmland,warehouse,factory,greenhouse',
-            'location_id' => 'nullable|exists:locations,id',
+            'type' => 'required|in:farmland,warehouse,factory,greenhouse,estate',
             'description' => 'nullable|string',
+            'address' => 'nullable|string',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'notes' => 'nullable|string',
             'total_area' => 'nullable|numeric|min:0',
             'area_unit' => 'nullable|string',
             'metadata' => 'nullable|array',
@@ -74,6 +77,7 @@ class SiteController extends Controller
                 'warehouse' => 'WH',
                 'factory' => 'FT',
                 'greenhouse' => 'GH',
+                'estate' => 'EST',
                 default => 'ST'
             };
             $validated['code'] = $prefix . '-' . strtoupper(Str::random(8));
@@ -84,7 +88,7 @@ class SiteController extends Controller
 
         $site = Site::create($validated);
 
-        return response()->json(['data' => $site->load('farm', 'location')], 201);
+        return response()->json(['data' => $site->load('farm')], 201);
     }
 
     public function show(string $id): JsonResponse
@@ -94,7 +98,7 @@ class SiteController extends Controller
             return $permissionCheck;
         }
 
-        $site = Site::with(['farm', 'location', 'farmZones', 'greenhouses', 'factories'])->findOrFail($id);
+        $site = Site::with(['farm', 'farmZones', 'greenhouses', 'factories'])->findOrFail($id);
         return response()->json(['data' => $site]);
     }
 
@@ -110,9 +114,12 @@ class SiteController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'code' => 'sometimes|string|unique:sites,code,' . $id,
-            'type' => 'sometimes|in:farmland,warehouse,factory,greenhouse',
-            'location_id' => 'nullable|exists:locations,id',
+            'type' => 'sometimes|in:farmland,warehouse,factory,greenhouse,estate',
             'description' => 'nullable|string',
+            'address' => 'nullable|string',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'notes' => 'nullable|string',
             'total_area' => 'nullable|numeric|min:0',
             'area_unit' => 'nullable|string',
             'metadata' => 'nullable|array',
@@ -121,7 +128,7 @@ class SiteController extends Controller
 
         $site->update($validated);
 
-        return response()->json(['data' => $site->load('farm', 'location')]);
+        return response()->json(['data' => $site->load('farm')]);
     }
 
     public function destroy(string $id): JsonResponse

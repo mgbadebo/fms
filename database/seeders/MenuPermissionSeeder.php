@@ -63,6 +63,7 @@ class MenuPermissionSeeder extends Seeder
             ['menu_key' => 'bell-pepper', 'submenu_key' => 'kpis', 'permission_type' => 'view', 'name' => 'View Bell Pepper KPIs', 'description' => 'View bell pepper KPIs', 'sort_order' => 70],
 
             // Reports Menu
+            ['menu_key' => 'reports', 'submenu_key' => 'dashboard', 'permission_type' => 'view', 'name' => 'View Dashboard', 'description' => 'View consolidated dashboard', 'sort_order' => 5],
             ['menu_key' => 'reports', 'submenu_key' => 'consolidated-sales', 'permission_type' => 'view', 'name' => 'View Consolidated Sales', 'description' => 'View consolidated sales reports', 'sort_order' => 10],
             ['menu_key' => 'reports', 'submenu_key' => 'consolidated-expenses', 'permission_type' => 'view', 'name' => 'View Consolidated Expenses', 'description' => 'View consolidated expenses reports', 'sort_order' => 20],
             ['menu_key' => 'reports', 'submenu_key' => 'staff-allocation', 'permission_type' => 'view', 'name' => 'View Staff Allocation', 'description' => 'View staff allocation reports', 'sort_order' => 30],
@@ -77,9 +78,6 @@ class MenuPermissionSeeder extends Seeder
             ['menu_key' => 'admin', 'submenu_key' => 'label-templates', 'permission_type' => 'view', 'name' => 'View Label Templates', 'description' => 'View label templates', 'sort_order' => 30],
             ['menu_key' => 'admin', 'submenu_key' => 'label-templates', 'permission_type' => 'create', 'name' => 'Create Label Templates', 'description' => 'Create new label templates', 'sort_order' => 31],
             ['menu_key' => 'admin', 'submenu_key' => 'label-templates', 'permission_type' => 'update', 'name' => 'Update Label Templates', 'description' => 'Update existing label templates', 'sort_order' => 32],
-            ['menu_key' => 'admin', 'submenu_key' => 'locations', 'permission_type' => 'view', 'name' => 'View Locations', 'description' => 'View locations', 'sort_order' => 40],
-            ['menu_key' => 'admin', 'submenu_key' => 'locations', 'permission_type' => 'create', 'name' => 'Create Locations', 'description' => 'Create new locations', 'sort_order' => 41],
-            ['menu_key' => 'admin', 'submenu_key' => 'locations', 'permission_type' => 'update', 'name' => 'Update Locations', 'description' => 'Update existing locations', 'sort_order' => 42],
             ['menu_key' => 'admin', 'submenu_key' => 'admin-zones', 'permission_type' => 'view', 'name' => 'View Admin Zones', 'description' => 'View admin zones', 'sort_order' => 50],
             ['menu_key' => 'admin', 'submenu_key' => 'admin-zones', 'permission_type' => 'create', 'name' => 'Create Admin Zones', 'description' => 'Create new admin zones', 'sort_order' => 51],
             ['menu_key' => 'admin', 'submenu_key' => 'admin-zones', 'permission_type' => 'update', 'name' => 'Update Admin Zones', 'description' => 'Update existing admin zones', 'sort_order' => 52],
@@ -101,6 +99,18 @@ class MenuPermissionSeeder extends Seeder
             ['menu_key' => 'admin', 'submenu_key' => 'staff-assignments', 'permission_type' => 'view', 'name' => 'View Staff Assignments', 'description' => 'View staff assignments', 'sort_order' => 110],
             ['menu_key' => 'admin', 'submenu_key' => 'staff-assignments', 'permission_type' => 'create', 'name' => 'Create Staff Assignments', 'description' => 'Create new staff assignments', 'sort_order' => 111],
             ['menu_key' => 'admin', 'submenu_key' => 'staff-assignments', 'permission_type' => 'update', 'name' => 'Update Staff Assignments', 'description' => 'Update existing staff assignments', 'sort_order' => 112],
+            ['menu_key' => 'admin', 'submenu_key' => 'crops', 'permission_type' => 'view', 'name' => 'View Crops', 'description' => 'View crops', 'sort_order' => 120],
+            ['menu_key' => 'admin', 'submenu_key' => 'crops', 'permission_type' => 'create', 'name' => 'Create Crops', 'description' => 'Create new crops', 'sort_order' => 121],
+            ['menu_key' => 'admin', 'submenu_key' => 'crops', 'permission_type' => 'update', 'name' => 'Update Crops', 'description' => 'Update existing crops', 'sort_order' => 122],
+            ['menu_key' => 'admin', 'submenu_key' => 'assets', 'permission_type' => 'view', 'name' => 'View Assets', 'description' => 'View assets', 'sort_order' => 130],
+            ['menu_key' => 'admin', 'submenu_key' => 'assets', 'permission_type' => 'create', 'name' => 'Create Assets', 'description' => 'Create new assets', 'sort_order' => 131],
+            ['menu_key' => 'admin', 'submenu_key' => 'assets', 'permission_type' => 'update', 'name' => 'Update Assets', 'description' => 'Update existing assets', 'sort_order' => 132],
+            ['menu_key' => 'admin', 'submenu_key' => 'asset-categories', 'permission_type' => 'view', 'name' => 'View Asset Categories', 'description' => 'View asset categories', 'sort_order' => 140],
+            ['menu_key' => 'admin', 'submenu_key' => 'asset-categories', 'permission_type' => 'create', 'name' => 'Create Asset Categories', 'description' => 'Create new asset categories', 'sort_order' => 141],
+            ['menu_key' => 'admin', 'submenu_key' => 'asset-categories', 'permission_type' => 'update', 'name' => 'Update Asset Categories', 'description' => 'Update existing asset categories', 'sort_order' => 142],
+            ['menu_key' => 'admin', 'submenu_key' => 'worker-job-roles', 'permission_type' => 'view', 'name' => 'View Worker Job Roles', 'description' => 'View worker job roles', 'sort_order' => 150],
+            ['menu_key' => 'admin', 'submenu_key' => 'worker-job-roles', 'permission_type' => 'create', 'name' => 'Create Worker Job Roles', 'description' => 'Create new worker job roles', 'sort_order' => 151],
+            ['menu_key' => 'admin', 'submenu_key' => 'worker-job-roles', 'permission_type' => 'update', 'name' => 'Update Worker Job Roles', 'description' => 'Update existing worker job roles', 'sort_order' => 152],
         ];
 
         foreach ($menuPermissions as $menuPermission) {

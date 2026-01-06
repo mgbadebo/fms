@@ -14,16 +14,21 @@ class BellPepperHarvestController extends Controller
     /**
      * Check if user has permission to access harvest endpoints
      */
-    private function checkPermission(): ?JsonResponse
+    private function checkPermission(string $action = 'view'): ?JsonResponse
     {
         $user = request()->user();
         if (!$user) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
         
-        // Check if user has any of the allowed roles
-        $allowedRoles = ['HARVESTER', 'MANAGER', 'OWNER', 'ADMIN', 'WORKER'];
-        if (!$user->hasAnyRole($allowedRoles)) {
+        // Admin has all permissions
+        if ($user->hasRole('ADMIN')) {
+            return null;
+        }
+        
+        // Check for specific permission: bell-pepper.harvests.{action}
+        $permissionName = "bell-pepper.harvests.{$action}";
+        if (!$user->can($permissionName)) {
             return response()->json(['message' => 'Insufficient permissions'], 403);
         }
         
@@ -32,7 +37,7 @@ class BellPepperHarvestController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $permissionCheck = $this->checkPermission();
+        $permissionCheck = $this->checkPermission('view');
         if ($permissionCheck) {
             return $permissionCheck;
         }
@@ -59,7 +64,7 @@ class BellPepperHarvestController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $permissionCheck = $this->checkPermission();
+        $permissionCheck = $this->checkPermission('create');
         if ($permissionCheck) {
             return $permissionCheck;
         }
@@ -142,7 +147,7 @@ class BellPepperHarvestController extends Controller
 
     public function show(string $id): JsonResponse
     {
-        $permissionCheck = $this->checkPermission();
+        $permissionCheck = $this->checkPermission('view');
         if ($permissionCheck) {
             return $permissionCheck;
         }
@@ -161,7 +166,7 @@ class BellPepperHarvestController extends Controller
 
     public function update(Request $request, string $id): JsonResponse
     {
-        $permissionCheck = $this->checkPermission();
+        $permissionCheck = $this->checkPermission('update');
         if ($permissionCheck) {
             return $permissionCheck;
         }
@@ -222,11 +227,12 @@ class BellPepperHarvestController extends Controller
         return response()->json(['data' => $harvest->load('farm', 'cycle', 'greenhouse', 'harvester')]);
     }
 
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
-        $permissionCheck = $this->checkPermission();
-        if ($permissionCheck) {
-            return $permissionCheck;
+        // Only ADMIN can delete
+        $user = $request->user();
+        if (!$user || !$user->hasRole('ADMIN')) {
+            return response()->json(['message' => 'Insufficient permissions. Only admins can delete harvests.'], 403);
         }
 
         $harvest = BellPepperHarvest::findOrFail($id);

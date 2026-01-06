@@ -24,15 +24,18 @@ class FactoryController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $permissionCheck = $this->checkAdminPermission();
-        if ($permissionCheck) {
-            return $permissionCheck;
-        }
-
+        // Allow reading factories without admin permission (needed for production batch creation)
         $query = Factory::with(['site']);
 
         if ($request->has('site_id')) {
             $query->where('site_id', $request->site_id);
+        }
+
+        if ($request->has('farm_id')) {
+            // Filter factories by farm through sites
+            $query->whereHas('site', function ($q) use ($request) {
+                $q->where('farm_id', $request->farm_id);
+            });
         }
 
         if ($request->has('production_type')) {

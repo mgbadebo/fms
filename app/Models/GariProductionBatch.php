@@ -12,6 +12,7 @@ class GariProductionBatch extends Model
 
     protected $fillable = [
         'farm_id',
+        'factory_id',
         'batch_code',
         'processing_date',
         'cassava_source',
@@ -68,6 +69,11 @@ class GariProductionBatch extends Model
     public function farm()
     {
         return $this->belongsTo(Farm::class);
+    }
+
+    public function factory()
+    {
+        return $this->belongsTo(Factory::class);
     }
 
     public function cassavaInputs()

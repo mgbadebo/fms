@@ -12,10 +12,10 @@ class AdminZoneController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = AdminZone::with(['location']);
+        $query = AdminZone::with(['site']);
 
-        if ($request->has('location_id')) {
-            $query->where('location_id', $request->location_id);
+        if ($request->has('site_id')) {
+            $query->where('site_id', $request->site_id);
         }
 
         if ($request->has('is_active')) {
@@ -29,7 +29,7 @@ class AdminZoneController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'location_id' => 'required|exists:locations,id',
+            'site_id' => 'required|exists:sites,id',
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:255|unique:admin_zones,code',
             'description' => 'nullable|string',
@@ -46,12 +46,12 @@ class AdminZoneController extends Controller
 
         $zone = AdminZone::create($validated);
 
-        return response()->json(['data' => $zone->load('location')], 201);
+        return response()->json(['data' => $zone->load('site')], 201);
     }
 
     public function show(string $id): JsonResponse
     {
-        $zone = AdminZone::with(['location', 'farms'])->findOrFail($id);
+        $zone = AdminZone::with(['site', 'farms'])->findOrFail($id);
         return response()->json(['data' => $zone]);
     }
 
@@ -60,7 +60,7 @@ class AdminZoneController extends Controller
         $zone = AdminZone::findOrFail($id);
 
         $validated = $request->validate([
-            'location_id' => 'sometimes|exists:locations,id',
+            'site_id' => 'sometimes|exists:sites,id',
             'name' => 'sometimes|string|max:255',
             'code' => 'sometimes|string|max:255|unique:admin_zones,code,' . $id,
             'description' => 'nullable|string',
@@ -70,7 +70,7 @@ class AdminZoneController extends Controller
 
         $zone->update($validated);
 
-        return response()->json(['data' => $zone->load('location')]);
+        return response()->json(['data' => $zone->load('site')]);
     }
 
     public function destroy(string $id): JsonResponse

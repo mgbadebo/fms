@@ -21,7 +21,6 @@ class Greenhouse extends Model
         'built_date',
         'construction_cost',
         'amortization_cycles',
-        'location_id',
         'notes',
         'is_active',
     ];
@@ -63,10 +62,6 @@ class Greenhouse extends Model
         return $this->belongsToMany(Borehole::class, 'greenhouse_borehole');
     }
 
-    public function location()
-    {
-        return $this->belongsTo(Location::class);
-    }
 
     // Calculate amortized cost per cycle
     public function getAmortizedCostPerCycle(): float

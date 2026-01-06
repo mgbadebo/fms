@@ -15,11 +15,14 @@ class Site extends Model
         'name',
         'code',
         'type',
-        'location_id',
         'description',
+        'address',
+        'latitude',
+        'longitude',
         'total_area',
         'area_unit',
         'metadata',
+        'notes',
         'is_active',
     ];
 
@@ -29,6 +32,8 @@ class Site extends Model
             'metadata' => 'array',
             'is_active' => 'boolean',
             'total_area' => 'decimal:2',
+            'latitude' => 'decimal:8',
+            'longitude' => 'decimal:8',
         ];
     }
 
@@ -38,10 +43,6 @@ class Site extends Model
         return $this->belongsTo(Farm::class);
     }
 
-    public function location()
-    {
-        return $this->belongsTo(Location::class);
-    }
 
     // Site type specific relationships
     public function farmZones()

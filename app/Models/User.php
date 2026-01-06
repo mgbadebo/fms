@@ -22,7 +22,9 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone',
         'password',
+        'profile_photo_path',
     ];
 
     /**
@@ -53,6 +55,61 @@ class User extends Authenticatable
      */
     public function farms()
     {
-        return $this->belongsToMany(Farm::class)->withPivot('role')->withTimestamps();
+        return $this->belongsToMany(Farm::class)
+            ->withPivot([
+                'role',
+                'membership_status',
+                'employment_category',
+                'pay_type',
+                'pay_rate',
+                'start_date',
+                'end_date',
+                'notes',
+            ])
+            ->withTimestamps();
+    }
+
+    /**
+     * Get all job role assignments for this user.
+     */
+    public function jobRoleAssignments()
+    {
+        return $this->hasMany(UserJobRoleAssignment::class);
+    }
+
+    /**
+     * Get active job role assignments for this user.
+     */
+    public function activeJobRoleAssignments()
+    {
+        return $this->hasMany(UserJobRoleAssignment::class)->whereNull('ended_at');
+    }
+
+    /**
+     * Get job role assignments for a specific farm.
+     */
+    public function jobRoleAssignmentsForFarm($farmId)
+    {
+        return $this->jobRoleAssignments()
+            ->where('farm_id', $farmId)
+            ->whereNull('ended_at');
+    }
+
+    /**
+     * Get the URL for the user's profile photo.
+     */
+    public function getProfilePhotoUrlAttribute(): ?string
+    {
+        if (!$this->profile_photo_path) {
+            return null;
+        }
+
+        // If it's already a full URL, return it
+        if (filter_var($this->profile_photo_path, FILTER_VALIDATE_URL)) {
+            return $this->profile_photo_path;
+        }
+
+        // Otherwise, generate storage URL
+        return asset('storage/' . $this->profile_photo_path);
     }
 }

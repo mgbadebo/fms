@@ -24,7 +24,6 @@ use App\Http\Controllers\Api\V1\BellPepperCycleCostController;
 use App\Http\Controllers\Api\V1\BellPepperHarvestController;
 use App\Http\Controllers\Api\V1\BellPepperSaleController;
 use App\Http\Controllers\Api\V1\BoreholeController;
-use App\Http\Controllers\Api\V1\LocationController;
 use App\Http\Controllers\Api\V1\AdminZoneController;
 use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\UserManagementController;
@@ -33,6 +32,11 @@ use App\Http\Controllers\Api\V1\FarmZoneController;
 use App\Http\Controllers\Api\V1\FactoryController;
 use App\Http\Controllers\Api\V1\StaffAssignmentController;
 use App\Http\Controllers\Api\V1\WorkerController;
+use App\Http\Controllers\Api\V1\AssetCategoryController;
+use App\Http\Controllers\Api\V1\AssetController;
+use App\Http\Controllers\Api\V1\AssetAssignmentController;
+use App\Http\Controllers\Api\V1\WorkerJobRoleController;
+use App\Http\Controllers\Api\V1\PermissionController;
 
 Route::prefix('v1')->group(function () {
     // Public authentication routes
@@ -149,14 +153,32 @@ Route::prefix('v1')->group(function () {
         // Bell Pepper Sales
         Route::apiResource('bell-pepper-sales', BellPepperSaleController::class);
         
-        // Admin Settings - Locations and Zones
-        Route::apiResource('locations', LocationController::class);
+        // Admin Settings - Zones
         Route::apiResource('admin-zones', AdminZoneController::class);
         
         // Role and User Management (Admin only)
         Route::get('roles/menu-permissions', [RoleController::class, 'menuPermissions']);
         Route::apiResource('roles', RoleController::class);
+        
+        // User Management with multi-farm support
         Route::apiResource('users', UserManagementController::class);
+        Route::post('users/{user}/farms/attach', [UserManagementController::class, 'attachToFarm']);
+        Route::patch('users/{user}/farms/{farm}/membership', [UserManagementController::class, 'updateFarmMembership']);
+        Route::post('users/{user}/farms/{farm}/detach', [UserManagementController::class, 'detachFromFarm']);
+        Route::post('users/{user}/farms/{farm}/job-roles/assign', [UserManagementController::class, 'assignJobRole']);
+        Route::post('users/{user}/farms/{farm}/job-roles/{assignment}/end', [UserManagementController::class, 'endJobRole']);
+        Route::get('users/{user}/farms/{farm}/job-roles', [UserManagementController::class, 'getJobRoles']);
+        Route::post('users/{user}/photo', [UserManagementController::class, 'uploadPhoto']);
+        Route::delete('users/{user}/photo', [UserManagementController::class, 'deletePhoto']);
+        
+        // Worker Job Roles (farm-scoped)
+        Route::apiResource('worker-job-roles', WorkerJobRoleController::class);
+        
+        // Permissions Management
+        Route::get('permissions', [PermissionController::class, 'index']);
+        Route::get('users/{user}/permissions', [PermissionController::class, 'getUserPermissions']);
+        Route::post('users/{user}/permissions/grant', [PermissionController::class, 'grantPermissions']);
+        Route::post('users/{user}/permissions/revoke', [PermissionController::class, 'revokePermissions']);
         
         // Site Management (Admin only)
         Route::apiResource('sites', SiteController::class);
@@ -173,6 +195,29 @@ Route::prefix('v1')->group(function () {
         
         // Worker Management
         Route::apiResource('workers', WorkerController::class);
+        
+        // Asset Tracker routes
+        Route::apiResource('asset-categories', AssetCategoryController::class);
+        Route::apiResource('assets', AssetController::class);
+        Route::get('assets/{asset}/assignments', [AssetController::class, 'assignments']);
+        Route::post('assets/{asset}/assign', [AssetController::class, 'assign']);
+        Route::post('assets/{asset}/return', [AssetController::class, 'returnAssignment']);
+        Route::get('assets/{asset}/maintenance-plans', [AssetController::class, 'maintenancePlans']);
+        Route::post('assets/{asset}/maintenance-plans', [AssetController::class, 'storeMaintenancePlan']);
+        Route::patch('assets/{asset}/maintenance-plans/{plan}', [AssetController::class, 'updateMaintenancePlan']);
+        Route::get('assets/{asset}/maintenance-records', [AssetController::class, 'maintenanceRecords']);
+        Route::post('assets/{asset}/maintenance-records', [AssetController::class, 'storeMaintenanceRecord']);
+        Route::get('assets/{asset}/fuel-logs', [AssetController::class, 'fuelLogs']);
+        Route::post('assets/{asset}/fuel-logs', [AssetController::class, 'storeFuelLog']);
+        Route::get('assets/{asset}/insurance-policies', [AssetController::class, 'insurancePolicies']);
+        Route::post('assets/{asset}/insurance-policies', [AssetController::class, 'storeInsurancePolicy']);
+        Route::get('assets/{asset}/depreciation-profile', [AssetController::class, 'depreciationProfile']);
+        Route::post('assets/{asset}/depreciation-profile', [AssetController::class, 'storeDepreciationProfile']);
+        Route::get('assets/{asset}/depreciation-schedule', [AssetController::class, 'depreciationSchedule']);
+        Route::get('assets/{asset}/attachments', [AssetController::class, 'attachments']);
+        Route::post('assets/{asset}/attachments', [AssetController::class, 'storeAttachment']);
+        Route::delete('assets/{asset}/attachments/{attachment}', [AssetController::class, 'destroyAttachment']);
+        Route::get('asset-assignments', [AssetAssignmentController::class, 'index']);
     });
 });
 

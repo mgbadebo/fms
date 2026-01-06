@@ -13,7 +13,7 @@ class AdminZone extends Model
     protected $table = 'admin_zones';
 
     protected $fillable = [
-        'location_id',
+        'site_id',
         'code',
         'name',
         'description',
@@ -29,9 +29,9 @@ class AdminZone extends Model
     }
 
     // Relationships
-    public function location()
+    public function site()
     {
-        return $this->belongsTo(Location::class);
+        return $this->belongsTo(Site::class);
     }
 
     public function farms()

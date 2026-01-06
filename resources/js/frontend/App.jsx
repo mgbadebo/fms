@@ -5,11 +5,8 @@ import Login from './pages/Login';
 import ConsolidatedDashboard from './pages/ConsolidatedDashboard';
 import Farms from './pages/Farms';
 import FarmDetail from './pages/FarmDetail';
-import HarvestLots from './pages/HarvestLots';
-import HarvestLotDetail from './pages/HarvestLotDetail';
 import ScaleDevices from './pages/ScaleDevices';
 import LabelTemplates from './pages/LabelTemplates';
-import StaffLabor from './pages/StaffLabor';
 import GariProductionBatches from './pages/GariProductionBatches';
 import GariProductionBatchDetail from './pages/GariProductionBatchDetail';
 import GariInventory from './pages/GariInventory';
@@ -26,14 +23,16 @@ import Boreholes from './pages/Boreholes';
 import BellPepperProduction from './pages/BellPepperProduction';
 import BellPepperCycleDetail from './pages/BellPepperCycleDetail';
 import BellPepperHarvests from './pages/BellPepperHarvests';
-import Locations from './pages/Locations';
 import Sites from './pages/Sites';
 import FarmZones from './pages/FarmZones';
 import Factories from './pages/Factories';
-import StaffAssignments from './pages/StaffAssignments';
 import AdminZones from './pages/AdminZones';
 import Roles from './pages/Roles';
+import Crops from './pages/Crops';
 import Users from './pages/Users';
+import Assets from './pages/Assets';
+import AssetCategories from './pages/AssetCategories';
+import WorkerJobRoles from './pages/WorkerJobRoles';
 import Layout from './components/Layout';
 
 function PrivateRoute({ children }) {
@@ -53,6 +52,99 @@ function PrivateRoute({ children }) {
     return user ? children : <Navigate to="/login" />;
 }
 
+function PermissionRoute({ children, requiredPermission }) {
+    const { user, loading } = useAuth();
+    
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+    
+    if (!user) {
+        return <Navigate to="/login" />;
+    }
+    
+    // Admin has all permissions
+    const isAdmin = user?.roles?.some(r => r.name === 'ADMIN');
+    
+    // Get user permissions
+    const userPermissions = user.permissions?.map(p => p.name) || 
+                          user.roles?.flatMap(r => r.permissions?.map(p => p.name) || []) || [];
+    
+    const hasPermission = isAdmin || userPermissions.includes(requiredPermission);
+    
+    if (!hasPermission) {
+        // Redirect to first accessible page
+        return <Navigate to="/bell-pepper-harvests" replace />;
+    }
+    
+    return children;
+}
+
+function DefaultRoute() {
+    const { user, loading } = useAuth();
+    
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+    
+    if (!user) {
+        return <Navigate to="/login" />;
+    }
+    
+    // Admin has all permissions
+    const isAdmin = user?.roles?.some(r => r.name === 'ADMIN');
+    
+    // Get user permissions
+    const userPermissions = user.permissions?.map(p => p.name) || 
+                          user.roles?.flatMap(r => r.permissions?.map(p => p.name) || []) || [];
+    
+    // Check if user has dashboard permission
+    const hasDashboardPermission = isAdmin || userPermissions.includes('reports.dashboard.view');
+    
+    if (hasDashboardPermission) {
+        return <ConsolidatedDashboard />;
+    }
+    
+    // Redirect to first accessible page based on permissions
+    // Priority: bell-pepper-harvests, bell-pepper-inventory, etc.
+    if (userPermissions.includes('bell-pepper.harvests.view')) {
+        return <Navigate to="/bell-pepper-harvests" replace />;
+    }
+    if (userPermissions.includes('bell-pepper.inventory.view')) {
+        return <Navigate to="/bell-pepper-inventory" replace />;
+    }
+    if (userPermissions.includes('gari.production-batches.view')) {
+        return <Navigate to="/gari-production-batches" replace />;
+    }
+    if (userPermissions.includes('gari.inventory.view')) {
+        return <Navigate to="/gari-inventory" replace />;
+    }
+    
+    // Default fallback - show a message or redirect to a safe page
+    return (
+        <div className="p-6">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <h2 className="text-lg font-semibold text-yellow-800">No Access</h2>
+                <p className="text-yellow-700">You don't have access to any pages. Please contact your administrator.</p>
+            </div>
+        </div>
+    );
+}
+
 function App() {
     return (
         <AuthProvider>
@@ -64,15 +156,11 @@ function App() {
                         <PrivateRoute>
                             <Layout>
                                 <Routes>
-                                    <Route path="/" element={<ConsolidatedDashboard />} />
+                                    <Route path="/" element={<DefaultRoute />} />
                                     <Route path="/farms" element={<Farms />} />
                                     <Route path="/farms/:id" element={<FarmDetail />} />
-                                    <Route path="/harvest-lots" element={<HarvestLots />} />
-                                    <Route path="/harvest-lots/:id" element={<HarvestLotDetail />} />
                                     <Route path="/scale-devices" element={<ScaleDevices />} />
                                     <Route path="/label-templates" element={<LabelTemplates />} />
-                                    <Route path="/staff-labor" element={<StaffLabor />} />
-                                    
                                     {/* Gari Routes */}
                                     <Route path="/gari-production-batches" element={<GariProductionBatches />} />
                                     <Route path="/gari-production-batches/:id" element={<GariProductionBatchDetail />} />
@@ -110,12 +198,14 @@ function App() {
                                     <Route path="/reports/staff-allocation" element={<StaffAllocation />} />
                                     
                                     {/* Admin Settings */}
-                                    <Route path="/admin/locations" element={<Locations />} />
                                     <Route path="/admin/admin-zones" element={<AdminZones />} />
                                     <Route path="/admin/sites" element={<Sites />} />
                                     <Route path="/admin/farm-zones" element={<FarmZones />} />
                                     <Route path="/admin/factories" element={<Factories />} />
-                                    <Route path="/admin/staff-assignments" element={<StaffAssignments />} />
+                                    <Route path="/admin/crops" element={<Crops />} />
+                                    <Route path="/admin/worker-job-roles" element={<WorkerJobRoles />} />
+                                    <Route path="/admin/assets" element={<Assets />} />
+                                    <Route path="/admin/asset-categories" element={<AssetCategories />} />
                                     <Route path="/admin/roles" element={<Roles />} />
                                     <Route path="/admin/users" element={<Users />} />
                                 </Routes>

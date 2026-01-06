@@ -12,7 +12,7 @@ class BoreholeController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Borehole::with(['farm', 'location']);
+        $query = Borehole::with(['farm', 'site']);
 
         if ($request->has('farm_id')) {
             $query->where('farm_id', $request->farm_id);
@@ -34,7 +34,7 @@ class BoreholeController extends Controller
             'installed_date' => 'required|date',
             'installation_cost' => 'required|numeric|min:0',
             'amortization_cycles' => 'nullable|integer|min:1',
-            'location_id' => 'nullable|exists:locations,id',
+            'site_id' => 'nullable|exists:sites,id',
             'specifications' => 'nullable|string',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
@@ -56,7 +56,7 @@ class BoreholeController extends Controller
 
     public function show(string $id): JsonResponse
     {
-        $borehole = Borehole::with(['farm', 'greenhouses', 'location'])->findOrFail($id);
+        $borehole = Borehole::with(['farm', 'greenhouses', 'site'])->findOrFail($id);
         return response()->json(['data' => $borehole]);
     }
 
@@ -69,7 +69,7 @@ class BoreholeController extends Controller
             'installed_date' => 'sometimes|date',
             'installation_cost' => 'sometimes|numeric|min:0',
             'amortization_cycles' => 'nullable|integer|min:1',
-            'location_id' => 'nullable|exists:locations,id',
+            'site_id' => 'nullable|exists:sites,id',
             'specifications' => 'nullable|string',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
@@ -77,7 +77,7 @@ class BoreholeController extends Controller
 
         $borehole->update($validated);
 
-        return response()->json(['data' => $borehole->load('farm', 'greenhouses', 'location')]);
+        return response()->json(['data' => $borehole->load('farm', 'greenhouses', 'site')]);
     }
 
     public function destroy(string $id): JsonResponse

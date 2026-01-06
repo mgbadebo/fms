@@ -14,8 +14,13 @@ class MaintenanceRecord extends Model
         'asset_id',
         'performed_at',
         'type',
+        'vendor_name',
         'cost',
         'currency',
+        'odometer_or_hours',
+        'description',
+        'parts_used',
+        'created_by',
         'notes',
         'metadata',
     ];
@@ -25,6 +30,8 @@ class MaintenanceRecord extends Model
         return [
             'performed_at' => 'datetime',
             'cost' => 'decimal:2',
+            'odometer_or_hours' => 'decimal:2',
+            'parts_used' => 'array',
             'metadata' => 'array',
         ];
     }
@@ -37,5 +44,10 @@ class MaintenanceRecord extends Model
     public function asset()
     {
         return $this->belongsTo(Asset::class);
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

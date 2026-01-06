@@ -12,7 +12,7 @@ class GreenhouseController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Greenhouse::with(['farm', 'site', 'boreholes', 'location']);
+        $query = Greenhouse::with(['farm', 'site', 'boreholes']);
 
         if ($request->has('farm_id')) {
             $query->where('farm_id', $request->farm_id);
@@ -48,7 +48,6 @@ class GreenhouseController extends Controller
             'amortization_cycles' => 'nullable|integer|min:1',
             'borehole_ids' => 'nullable|array',
             'borehole_ids.*' => 'exists:boreholes,id',
-            'location_id' => 'nullable|exists:locations,id',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
@@ -78,7 +77,7 @@ class GreenhouseController extends Controller
 
     public function show(string $id): JsonResponse
     {
-        $greenhouse = Greenhouse::with(['farm', 'site', 'bellPepperCycles', 'boreholes', 'location'])->findOrFail($id);
+        $greenhouse = Greenhouse::with(['farm', 'site', 'bellPepperCycles', 'boreholes'])->findOrFail($id);
         return response()->json(['data' => $greenhouse]);
     }
 
@@ -97,7 +96,6 @@ class GreenhouseController extends Controller
             'amortization_cycles' => 'nullable|integer|min:1',
             'borehole_ids' => 'nullable|array',
             'borehole_ids.*' => 'exists:boreholes,id',
-            'location_id' => 'nullable|exists:locations,id',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
@@ -115,7 +113,7 @@ class GreenhouseController extends Controller
             $greenhouse->boreholes()->sync($boreholeIds);
         }
 
-        return response()->json(['data' => $greenhouse->load('farm', 'site', 'boreholes', 'location')]);
+        return response()->json(['data' => $greenhouse->load('farm', 'site', 'boreholes')]);
     }
 
     public function destroy(string $id): JsonResponse

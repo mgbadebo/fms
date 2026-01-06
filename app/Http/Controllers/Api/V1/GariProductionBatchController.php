@@ -12,7 +12,7 @@ class GariProductionBatchController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = GariProductionBatch::with(['farm', 'cassavaInputs']);
+        $query = GariProductionBatch::with(['farm', 'factory', 'cassavaInputs']);
 
         if ($request->has('farm_id')) {
             $query->where('farm_id', $request->farm_id);
@@ -38,6 +38,7 @@ class GariProductionBatchController extends Controller
     {
         $validated = $request->validate([
             'farm_id' => 'required|exists:farms,id',
+            'factory_id' => 'required|exists:factories,id',
             'processing_date' => 'required|date',
             'cassava_source' => 'required|in:HARVESTED,PURCHASED,MIXED',
             'cassava_quantity_tonnes' => 'required_without:cassava_quantity_kg|numeric|min:0',
@@ -82,7 +83,7 @@ class GariProductionBatchController extends Controller
         $batch->calculateWaste();
         $batch->save();
 
-        return response()->json(['data' => $batch->load('farm', 'cassavaInputs')], 201);
+        return response()->json(['data' => $batch->load('farm', 'factory', 'cassavaInputs')], 201);
     }
 
     public function show(string $gariProductionBatch): JsonResponse
@@ -97,6 +98,7 @@ class GariProductionBatchController extends Controller
         // Load relationships - skip gariInventory for now to avoid table name issues
         $batch->load([
             'farm',
+            'factory',
             'cassavaInputs.harvestLot',
             'cassavaInputs.field',
             'wasteLosses'
@@ -128,6 +130,7 @@ class GariProductionBatchController extends Controller
         }
 
         $validated = $request->validate([
+            'factory_id' => 'sometimes|exists:factories,id',
             'processing_date' => 'sometimes|date',
             'cassava_source' => 'sometimes|in:HARVESTED,PURCHASED,MIXED',
             'cassava_quantity_tonnes' => 'nullable|numeric|min:0',
@@ -169,7 +172,7 @@ class GariProductionBatchController extends Controller
         $batch->calculateWaste();
         $batch->save();
 
-        return response()->json(['data' => $batch->load('farm', 'cassavaInputs')]);
+        return response()->json(['data' => $batch->load('farm', 'factory', 'cassavaInputs')]);
     }
 
     public function destroy(string $gariProductionBatch): JsonResponse

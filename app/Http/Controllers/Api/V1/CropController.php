@@ -30,8 +30,7 @@ class CropController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:crops,name',
             'category' => 'required|string',
-            'scientific_name' => 'nullable|string|max:255',
-            'default_maturity_days' => 'nullable|integer',
+            'default_maturity_days' => 'nullable|integer|min:1',
             'description' => 'nullable|string',
         ]);
 
@@ -53,8 +52,7 @@ class CropController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255|unique:crops,name,' . $id,
             'category' => 'sometimes|string',
-            'scientific_name' => 'nullable|string|max:255',
-            'default_maturity_days' => 'nullable|integer',
+            'default_maturity_days' => 'nullable|integer|min:1',
             'description' => 'nullable|string',
         ]);
 

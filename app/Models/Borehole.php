@@ -17,7 +17,7 @@ class Borehole extends Model
         'installed_date',
         'installation_cost',
         'amortization_cycles',
-        'location_id',
+        'site_id',
         'specifications',
         'notes',
         'is_active',
@@ -43,9 +43,9 @@ class Borehole extends Model
         return $this->belongsToMany(Greenhouse::class, 'greenhouse_borehole');
     }
 
-    public function location()
+    public function site()
     {
-        return $this->belongsTo(Location::class);
+        return $this->belongsTo(Site::class);
     }
 
     // Calculate amortized cost per cycle

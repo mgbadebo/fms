@@ -16,8 +16,7 @@ return new class extends Migration
             $table->foreignId('farm_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->string('code')->unique();
-            $table->enum('type', ['farmland', 'warehouse', 'factory', 'greenhouse'])->default('farmland');
-            $table->foreignId('location_id')->nullable()->constrained()->onDelete('set null');
+            $table->enum('type', ['farmland', 'warehouse', 'factory', 'greenhouse', 'estate'])->default('farmland');
             $table->text('description')->nullable();
             $table->decimal('total_area', 10, 2)->nullable();
             $table->string('area_unit')->default('hectares');
