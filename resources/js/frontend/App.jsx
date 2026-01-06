@@ -19,6 +19,7 @@ import ConsolidatedExpenses from './pages/ConsolidatedExpenses';
 import StaffAllocation from './pages/StaffAllocation';
 import CropPlaceholder from './pages/CropPlaceholder';
 import Greenhouses from './pages/Greenhouses';
+import GreenhouseManagement from './pages/GreenhouseManagement';
 import Boreholes from './pages/Boreholes';
 import BellPepperProduction from './pages/BellPepperProduction';
 import BellPepperCycleDetail from './pages/BellPepperCycleDetail';
@@ -171,7 +172,6 @@ function App() {
                                     <Route path="/gari-waste-losses" element={<GariWasteLosses />} />
                                     
                                     {/* Bell Pepper Routes */}
-                                    <Route path="/greenhouses" element={<Greenhouses />} />
                                     <Route path="/boreholes" element={<Boreholes />} />
                                     <Route path="/bell-pepper-production" element={<BellPepperProduction />} />
                                     <Route path="/bell-pepper-cycles/:id" element={<BellPepperCycleDetail />} />
@@ -200,6 +200,7 @@ function App() {
                                     {/* Admin Settings */}
                                     <Route path="/admin/admin-zones" element={<AdminZones />} />
                                     <Route path="/admin/sites" element={<Sites />} />
+                                    <Route path="/admin/greenhouses" element={<GreenhouseManagement />} />
                                     <Route path="/admin/farm-zones" element={<FarmZones />} />
                                     <Route path="/admin/factories" element={<Factories />} />
                                     <Route path="/admin/crops" element={<Crops />} />

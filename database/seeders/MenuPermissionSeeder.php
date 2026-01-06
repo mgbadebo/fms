@@ -42,9 +42,10 @@ class MenuPermissionSeeder extends Seeder
             ['menu_key' => 'gari', 'submenu_key' => 'packaging-materials', 'permission_type' => 'update', 'name' => 'Update Packaging Materials', 'description' => 'Update existing packaging materials', 'sort_order' => 62],
 
             // Bell Pepper Menu
-            ['menu_key' => 'bell-pepper', 'submenu_key' => 'greenhouses', 'permission_type' => 'view', 'name' => 'View Greenhouses', 'description' => 'View greenhouses', 'sort_order' => 10],
-            ['menu_key' => 'bell-pepper', 'submenu_key' => 'greenhouses', 'permission_type' => 'create', 'name' => 'Create Greenhouses', 'description' => 'Create new greenhouses', 'sort_order' => 11],
-            ['menu_key' => 'bell-pepper', 'submenu_key' => 'greenhouses', 'permission_type' => 'update', 'name' => 'Update Greenhouses', 'description' => 'Update existing greenhouses', 'sort_order' => 12],
+            // Greenhouse Management moved to Admin Settings
+            ['menu_key' => 'admin', 'submenu_key' => 'greenhouses', 'permission_type' => 'view', 'name' => 'View Greenhouse Management', 'description' => 'View greenhouse management', 'sort_order' => 50],
+            ['menu_key' => 'admin', 'submenu_key' => 'greenhouses', 'permission_type' => 'create', 'name' => 'Create Greenhouses', 'description' => 'Create new greenhouses', 'sort_order' => 51],
+            ['menu_key' => 'admin', 'submenu_key' => 'greenhouses', 'permission_type' => 'update', 'name' => 'Update Greenhouses', 'description' => 'Update existing greenhouses', 'sort_order' => 52],
             ['menu_key' => 'bell-pepper', 'submenu_key' => 'boreholes', 'permission_type' => 'view', 'name' => 'View Boreholes', 'description' => 'View boreholes', 'sort_order' => 20],
             ['menu_key' => 'bell-pepper', 'submenu_key' => 'boreholes', 'permission_type' => 'create', 'name' => 'Create Boreholes', 'description' => 'Create new boreholes', 'sort_order' => 21],
             ['menu_key' => 'bell-pepper', 'submenu_key' => 'boreholes', 'permission_type' => 'update', 'name' => 'Update Boreholes', 'description' => 'Update existing boreholes', 'sort_order' => 22],

@@ -11,18 +11,30 @@ class Greenhouse extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'farm_id',
+        'farm_id', // Derived from site, not set directly by client
         'site_id',
         'code',
+        'greenhouse_code',
         'kit_id',
         'kit_number',
         'name',
+        'type',
+        'status',
+        'length',
+        'width',
+        'height',
+        'total_area',
         'size_sqm',
+        'orientation',
+        'plant_capacity',
+        'primary_crop_type',
+        'cropping_system',
         'built_date',
         'construction_cost',
         'amortization_cycles',
         'notes',
         'is_active',
+        'created_by',
     ];
 
     protected function casts(): array
@@ -30,9 +42,100 @@ class Greenhouse extends Model
         return [
             'built_date' => 'date',
             'size_sqm' => 'decimal:2',
+            'length' => 'decimal:2',
+            'width' => 'decimal:2',
+            'height' => 'decimal:2',
+            'total_area' => 'decimal:2',
             'construction_cost' => 'decimal:2',
             'is_active' => 'boolean',
         ];
+    }
+    
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($greenhouse) {
+            // Derive farm_id from site if not set
+            if (!$greenhouse->farm_id && $greenhouse->site_id) {
+                $site = \App\Models\Site::find($greenhouse->site_id);
+                if ($site) {
+                    $greenhouse->farm_id = $site->farm_id;
+                }
+            }
+            
+            // Set created_by if not provided
+            if (!$greenhouse->created_by && auth()->check()) {
+                $greenhouse->created_by = auth()->id();
+            }
+            
+            // Set built_date if not provided (default to today)
+            if (!$greenhouse->built_date) {
+                $greenhouse->built_date = now()->toDateString();
+            }
+            
+            // Compute area from length and width if provided
+            $computedArea = null;
+            if ($greenhouse->length && $greenhouse->width) {
+                $computedArea = $greenhouse->length * $greenhouse->width;
+            }
+            
+            // Set total_area if not provided
+            if (!$greenhouse->total_area && $computedArea) {
+                $greenhouse->total_area = $computedArea;
+            }
+            
+            // Set size_sqm (required field) - use total_area, computed area, or default to 0
+            if (!$greenhouse->size_sqm) {
+                if ($greenhouse->total_area) {
+                    $greenhouse->size_sqm = $greenhouse->total_area;
+                } elseif ($computedArea) {
+                    $greenhouse->size_sqm = $computedArea;
+                    // Also set total_area if not set
+                    if (!$greenhouse->total_area) {
+                        $greenhouse->total_area = $computedArea;
+                    }
+                } else {
+                    // Default to 0 if nothing is provided (shouldn't happen if length/width are required)
+                    $greenhouse->size_sqm = 0;
+                }
+            }
+            
+            // Auto-generate greenhouse_code if not provided
+            if (!$greenhouse->greenhouse_code && $greenhouse->site_id) {
+                $codeGenerator = app(\App\Services\Greenhouse\GreenhouseCodeGeneratorService::class);
+                $greenhouse->greenhouse_code = $codeGenerator->generate($greenhouse->site_id);
+            }
+            
+            // Set code field (for backward compatibility with existing code column)
+            // Always sync code with greenhouse_code to maintain compatibility
+            if ($greenhouse->greenhouse_code) {
+                $greenhouse->code = $greenhouse->greenhouse_code;
+            }
+            
+            // Set greenhouse_code from code if not provided (for backward compatibility with old records)
+            if (!$greenhouse->greenhouse_code && $greenhouse->code) {
+                $greenhouse->greenhouse_code = $greenhouse->code;
+            }
+        });
+        
+        static::updating(function ($greenhouse) {
+            // If site_id changes, re-derive farm_id
+            if ($greenhouse->isDirty('site_id') && $greenhouse->site_id) {
+                $site = \App\Models\Site::find($greenhouse->site_id);
+                if ($site) {
+                    $greenhouse->farm_id = $site->farm_id;
+                }
+            }
+            
+            // Recompute total_area if length or width changes
+            if ($greenhouse->isDirty(['length', 'width']) && $greenhouse->length && $greenhouse->width) {
+                $greenhouse->total_area = $greenhouse->length * $greenhouse->width;
+            }
+        });
     }
 
     // Relationships
@@ -44,6 +147,36 @@ class Greenhouse extends Model
     public function site()
     {
         return $this->belongsTo(Site::class);
+    }
+    
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+    
+    /**
+     * Compute total area from length and width.
+     */
+    public function computeTotalArea(): float
+    {
+        if ($this->length && $this->width) {
+            return (float)($this->length * $this->width);
+        }
+        return 0;
+    }
+    
+    /**
+     * Get total area (computed or stored).
+     * Note: This is handled in the boot method and stored in the database.
+     * This accessor ensures we always return a value even if not stored.
+     */
+    public function getTotalAreaAttribute($value)
+    {
+        if ($value !== null) {
+            return $value;
+        }
+        // If not stored, compute on the fly
+        return $this->computeTotalArea();
     }
 
     // Staff assignments to this greenhouse

@@ -4,7 +4,7 @@
     "name": "index"
   },
   "resources/css/app.css": {
-    "file": "assets/app-dfJSuY76.css",
+    "file": "assets/app-CbQ2hMg7.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -22,7 +22,7 @@
     ]
   },
   "resources/js/frontend.jsx": {
-    "file": "assets/frontend-FZnumPIz.js",
+    "file": "assets/frontend-D-XjVgCg.js",
     "name": "frontend",
     "src": "resources/js/frontend.jsx",
     "isEntry": true,
@@ -30,7 +30,7 @@
       "_index-B9ygI19o.js"
     ],
     "css": [
-      "assets/app-dfJSuY76.css"
+      "assets/app-CbQ2hMg7.css"
     ]
   }
 }

@@ -45,7 +45,7 @@ export default function Layout({ children }) {
         const path = location.pathname;
         return {
             gari: path.startsWith('/gari'),
-            bellPepper: path.startsWith('/bell-pepper') || path.startsWith('/greenhouses') || path.startsWith('/boreholes'),
+            bellPepper: path.startsWith('/bell-pepper') || path.startsWith('/boreholes'),
             tomatoes: path.startsWith('/tomatoes'),
             habaneros: path.startsWith('/habaneros'),
             livestock: false,
@@ -60,7 +60,7 @@ export default function Layout({ children }) {
         setExpandedGroups(prev => ({
             ...prev,
             gari: path.startsWith('/gari') ? true : prev.gari,
-            bellPepper: path.startsWith('/bell-pepper') || path.startsWith('/greenhouses') || path.startsWith('/boreholes') ? true : prev.bellPepper,
+            bellPepper: path.startsWith('/bell-pepper') || path.startsWith('/boreholes') ? true : prev.bellPepper,
             tomatoes: path.startsWith('/tomatoes') ? true : prev.tomatoes,
             habaneros: path.startsWith('/habaneros') ? true : prev.habaneros,
         }));
@@ -107,7 +107,6 @@ export default function Layout({ children }) {
             key: 'bellPepper',
             icon: Sprout,
             items: [
-                { name: 'Greenhouses', href: '/greenhouses', icon: Factory },
                 { name: 'Boreholes', href: '/boreholes', icon: Factory },
                 { name: 'Production', href: '/bell-pepper-production', icon: Factory },
                 { name: 'Harvests', href: '/bell-pepper-harvests', icon: Package },
@@ -154,6 +153,7 @@ export default function Layout({ children }) {
                 { name: 'Sites', href: '/admin/sites', icon: Warehouse },
                 { name: 'Farm Zones', href: '/admin/farm-zones', icon: Grid3x3 },
                 { name: 'Factories', href: '/admin/factories', icon: Building2 },
+                { name: 'Greenhouse Management', href: '/admin/greenhouses', icon: Factory },
                 { name: 'Scale Devices', href: '/scale-devices', icon: Scale },
                 { name: 'Label Templates', href: '/label-templates', icon: Tag },
                 { name: 'Crops', href: '/admin/crops', icon: Sprout },
@@ -207,7 +207,7 @@ export default function Layout({ children }) {
             '/gari-kpis': { menu: 'gari', submenu: 'kpis' },
             '/gari-waste-losses': { menu: 'gari', submenu: 'waste-losses' },
             '/packaging-materials': { menu: 'gari', submenu: 'packaging-materials' },
-            '/greenhouses': { menu: 'bell-pepper', submenu: 'greenhouses' },
+            '/admin/greenhouses': { menu: 'admin', submenu: 'greenhouses' },
             '/boreholes': { menu: 'bell-pepper', submenu: 'boreholes' },
             '/bell-pepper-production': { menu: 'bell-pepper', submenu: 'production' },
             '/bell-pepper-harvests': { menu: 'bell-pepper', submenu: 'harvests' },
