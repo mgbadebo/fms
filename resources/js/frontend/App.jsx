@@ -20,7 +20,6 @@ import StaffAllocation from './pages/StaffAllocation';
 import CropPlaceholder from './pages/CropPlaceholder';
 import Greenhouses from './pages/Greenhouses';
 import GreenhouseManagement from './pages/GreenhouseManagement';
-import Boreholes from './pages/Boreholes';
 import BellPepperProduction from './pages/BellPepperProduction';
 import BellPepperCycleDetail from './pages/BellPepperCycleDetail';
 import BellPepperHarvests from './pages/BellPepperHarvests';
@@ -34,6 +33,7 @@ import Users from './pages/Users';
 import Assets from './pages/Assets';
 import AssetCategories from './pages/AssetCategories';
 import WorkerJobRoles from './pages/WorkerJobRoles';
+import Boreholes from './pages/Boreholes';
 import Layout from './components/Layout';
 
 function PrivateRoute({ children }) {
@@ -172,7 +172,6 @@ function App() {
                                     <Route path="/gari-waste-losses" element={<GariWasteLosses />} />
                                     
                                     {/* Bell Pepper Routes */}
-                                    <Route path="/boreholes" element={<Boreholes />} />
                                     <Route path="/bell-pepper-production" element={<BellPepperProduction />} />
                                     <Route path="/bell-pepper-cycles/:id" element={<BellPepperCycleDetail />} />
                                     <Route path="/bell-pepper-harvests" element={<BellPepperHarvests />} />
@@ -200,6 +199,7 @@ function App() {
                                     {/* Admin Settings */}
                                     <Route path="/admin/admin-zones" element={<AdminZones />} />
                                     <Route path="/admin/sites" element={<Sites />} />
+                                    <Route path="/admin/boreholes" element={<Boreholes />} />
                                     <Route path="/admin/greenhouses" element={<GreenhouseManagement />} />
                                     <Route path="/admin/farm-zones" element={<FarmZones />} />
                                     <Route path="/admin/factories" element={<Factories />} />
