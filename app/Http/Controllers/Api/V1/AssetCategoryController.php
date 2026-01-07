@@ -13,10 +13,6 @@ class AssetCategoryController extends Controller
     {
         $query = AssetCategory::with(['parent', 'children']);
 
-        if ($request->has('farm_id')) {
-            $query->where('farm_id', $request->farm_id);
-        }
-
         if ($request->has('is_active')) {
             $query->where('is_active', $request->boolean('is_active'));
         }
@@ -28,23 +24,11 @@ class AssetCategoryController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'farm_id' => 'required|exists:farms,id',
-            'code' => 'required|string|max:255',
+            'code' => 'required|string|max:255|unique:asset_categories,code',
             'name' => 'required|string|max:255',
             'parent_id' => 'nullable|exists:asset_categories,id',
             'is_active' => 'boolean',
         ]);
-
-        // Ensure code is unique per farm
-        $exists = AssetCategory::where('farm_id', $validated['farm_id'])
-            ->where('code', $validated['code'])
-            ->exists();
-
-        if ($exists) {
-            return response()->json([
-                'message' => 'Category code already exists for this farm'
-            ], 422);
-        }
 
         $category = AssetCategory::create($validated);
         return response()->json(['data' => $category->load(['parent', 'children'])], 201);
@@ -61,25 +45,11 @@ class AssetCategoryController extends Controller
         $category = AssetCategory::findOrFail($id);
 
         $validated = $request->validate([
-            'code' => 'sometimes|string|max:255',
+            'code' => 'sometimes|string|max:255|unique:asset_categories,code,' . $id,
             'name' => 'sometimes|string|max:255',
             'parent_id' => 'nullable|exists:asset_categories,id',
             'is_active' => 'boolean',
         ]);
-
-        // Ensure code uniqueness if changed
-        if (isset($validated['code']) && $validated['code'] !== $category->code) {
-            $exists = AssetCategory::where('farm_id', $category->farm_id)
-                ->where('code', $validated['code'])
-                ->where('id', '!=', $id)
-                ->exists();
-
-            if ($exists) {
-                return response()->json([
-                    'message' => 'Category code already exists for this farm'
-                ], 422);
-            }
-        }
 
         $category->update($validated);
         return response()->json(['data' => $category->load(['parent', 'children'])]);

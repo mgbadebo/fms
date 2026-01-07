@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\AssetCategory;
-use App\Models\Farm;
 
 class AssetCategorySeeder extends Seeder
 {
@@ -13,14 +12,6 @@ class AssetCategorySeeder extends Seeder
      */
     public function run(): void
     {
-        // Get all farms or create a default farm for seeding
-        $farms = Farm::all();
-        
-        if ($farms->isEmpty()) {
-            $this->command->warn('No farms found. Please create farms first before seeding asset categories.');
-            return;
-        }
-
         $categories = [
             ['code' => 'LAND', 'name' => 'Land'],
             ['code' => 'BUILDING', 'name' => 'Building'],
@@ -39,21 +30,18 @@ class AssetCategorySeeder extends Seeder
             ['code' => 'OTHER', 'name' => 'Other'],
         ];
 
-        foreach ($farms as $farm) {
-            foreach ($categories as $categoryData) {
-                AssetCategory::firstOrCreate(
-                    [
-                        'farm_id' => $farm->id,
-                        'code' => $categoryData['code'],
-                    ],
-                    [
-                        'name' => $categoryData['name'],
-                        'is_active' => true,
-                    ]
-                );
-            }
+        foreach ($categories as $categoryData) {
+            AssetCategory::firstOrCreate(
+                [
+                    'code' => $categoryData['code'],
+                ],
+                [
+                    'name' => $categoryData['name'],
+                    'is_active' => true,
+                ]
+            );
         }
 
-        $this->command->info('Asset categories seeded successfully for ' . $farms->count() . ' farm(s).');
+        $this->command->info('Global asset categories seeded successfully.');
     }
 }

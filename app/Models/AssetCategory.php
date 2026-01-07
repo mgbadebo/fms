@@ -11,7 +11,6 @@ class AssetCategory extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'farm_id',
         'code',
         'name',
         'parent_id',
@@ -23,11 +22,6 @@ class AssetCategory extends Model
         return [
             'is_active' => 'boolean',
         ];
-    }
-
-    public function farm()
-    {
-        return $this->belongsTo(Farm::class);
     }
 
     public function parent()
