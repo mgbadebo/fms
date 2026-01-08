@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Farm Management System API</title>
+    <title>Ogenki Farms - Farm Management System</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/favicon-16x16.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/apple-touch-icon.png') }}">
     <style>
         * {
             margin: 0;
@@ -234,7 +240,11 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🌾 Farm Management System</h1>
+            <div style="margin-bottom: 20px;">
+                <img src="{{ asset('images/ogenki-logo.png') }}" alt="Ogenki Farms" style="max-height: 80px; max-width: 300px; margin: 0 auto; display: block;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <h1 style="display: none;">🌾 Ogenki Farms</h1>
+            </div>
+            <h1 style="margin-top: 20px;">Farm Management System</h1>
             <p>Backend API v1.0.0</p>
         </div>
         

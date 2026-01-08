@@ -46,9 +46,10 @@ class MenuPermissionSeeder extends Seeder
             ['menu_key' => 'admin', 'submenu_key' => 'greenhouses', 'permission_type' => 'view', 'name' => 'View Greenhouse Management', 'description' => 'View greenhouse management', 'sort_order' => 50],
             ['menu_key' => 'admin', 'submenu_key' => 'greenhouses', 'permission_type' => 'create', 'name' => 'Create Greenhouses', 'description' => 'Create new greenhouses', 'sort_order' => 51],
             ['menu_key' => 'admin', 'submenu_key' => 'greenhouses', 'permission_type' => 'update', 'name' => 'Update Greenhouses', 'description' => 'Update existing greenhouses', 'sort_order' => 52],
-            ['menu_key' => 'bell-pepper', 'submenu_key' => 'boreholes', 'permission_type' => 'view', 'name' => 'View Boreholes', 'description' => 'View boreholes', 'sort_order' => 20],
-            ['menu_key' => 'bell-pepper', 'submenu_key' => 'boreholes', 'permission_type' => 'create', 'name' => 'Create Boreholes', 'description' => 'Create new boreholes', 'sort_order' => 21],
-            ['menu_key' => 'bell-pepper', 'submenu_key' => 'boreholes', 'permission_type' => 'update', 'name' => 'Update Boreholes', 'description' => 'Update existing boreholes', 'sort_order' => 22],
+            // Borehole Management under Admin
+            ['menu_key' => 'admin', 'submenu_key' => 'boreholes', 'permission_type' => 'view', 'name' => 'View Borehole Management', 'description' => 'View boreholes', 'sort_order' => 55],
+            ['menu_key' => 'admin', 'submenu_key' => 'boreholes', 'permission_type' => 'create', 'name' => 'Create Boreholes', 'description' => 'Create new boreholes', 'sort_order' => 56],
+            ['menu_key' => 'admin', 'submenu_key' => 'boreholes', 'permission_type' => 'update', 'name' => 'Update Boreholes', 'description' => 'Update existing boreholes', 'sort_order' => 57],
             ['menu_key' => 'bell-pepper', 'submenu_key' => 'production', 'permission_type' => 'view', 'name' => 'View Bell Pepper Production', 'description' => 'View bell pepper production cycles', 'sort_order' => 30],
             ['menu_key' => 'bell-pepper', 'submenu_key' => 'production', 'permission_type' => 'create', 'name' => 'Create Bell Pepper Production', 'description' => 'Create new production cycles', 'sort_order' => 31],
             ['menu_key' => 'bell-pepper', 'submenu_key' => 'production', 'permission_type' => 'update', 'name' => 'Update Bell Pepper Production', 'description' => 'Update existing production cycles', 'sort_order' => 32],

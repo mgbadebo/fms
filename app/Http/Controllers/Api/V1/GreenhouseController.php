@@ -8,17 +8,21 @@ use App\Models\Site;
 use App\Http\Requests\StoreGreenhouseRequest;
 use App\Http\Requests\UpdateGreenhouseRequest;
 use App\Http\Resources\GreenhouseResource;
+use App\Services\Greenhouse\GreenhouseAssetService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class GreenhouseController extends Controller
 {
+    public function __construct(
+        protected GreenhouseAssetService $greenhouseAssetService
+    ){}
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Greenhouse::with(['farm', 'site', 'creator']);
+        $query = Greenhouse::with(['farm', 'site', 'creator', 'asset']);
 
         // Filter by site_id
         if ($request->has('site_id')) {
@@ -90,7 +94,39 @@ class GreenhouseController extends Controller
         // Create the greenhouse (code will be auto-generated in model boot if not provided)
         $greenhouse = Greenhouse::create($validated);
 
-        return (new GreenhouseResource($greenhouse->load('farm', 'site', 'creator')))
+        // Create asset only if track_as_asset is checked
+        $trackAsAsset = $request->boolean('track_as_asset', false);
+        
+        if ($trackAsAsset && empty($validated['asset_id'])) {
+            // Extract asset data from validated array (keys prefixed with 'asset_')
+            $assetData = [];
+            foreach ($validated as $key => $value) {
+                if (str_starts_with($key, 'asset_')) {
+                    // Remove 'asset_' prefix for the service
+                    $assetKey = substr($key, 6); // Remove 'asset_' (6 characters)
+                    $assetData[$assetKey] = $value;
+                }
+            }
+            
+            // Include GPS coordinates from greenhouse if available
+            if (isset($validated['latitude'])) {
+                $assetData['asset_gps_lat'] = $validated['latitude'];
+            }
+            if (isset($validated['longitude'])) {
+                $assetData['asset_gps_lng'] = $validated['longitude'];
+            }
+            
+            $asset = $this->greenhouseAssetService->createAssetForGreenhouse(
+                $site->farm_id, 
+                $validated['site_id'], 
+                $validated['name'],
+                $assetData
+            );
+            $greenhouse->asset_id = $asset->id;
+            $greenhouse->save();
+        }
+
+        return (new GreenhouseResource($greenhouse->load('farm', 'site', 'creator', 'asset')))
             ->response()
             ->setStatusCode(201);
     }
@@ -100,7 +136,7 @@ class GreenhouseController extends Controller
      */
     public function show(string $id): JsonResponse
     {
-        $greenhouse = Greenhouse::with(['farm', 'site', 'creator', 'bellPepperCycles', 'boreholes'])
+        $greenhouse = Greenhouse::with(['farm', 'site', 'creator', 'asset', 'bellPepperCycles', 'boreholes'])
             ->findOrFail($id);
         
         return (new GreenhouseResource($greenhouse))->response();
@@ -132,7 +168,7 @@ class GreenhouseController extends Controller
         
         $greenhouse->update($validated);
 
-        return (new GreenhouseResource($greenhouse->load('farm', 'site', 'creator')))->response();
+        return (new GreenhouseResource($greenhouse->load('farm', 'site', 'creator', 'asset')))->response();
     }
 
     /**

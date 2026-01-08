@@ -137,6 +137,7 @@ Route::prefix('v1')->group(function () {
         
         // Bell Pepper Greenhouse Management
         Route::apiResource('greenhouses', GreenhouseController::class);
+    Route::apiResource('boreholes', \App\Http\Controllers\Api\V1\BoreholeController::class);
         
         // Boreholes
         Route::apiResource('boreholes', BoreholeController::class);

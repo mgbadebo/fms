@@ -12,6 +12,7 @@ class Factory extends Model
 
     protected $fillable = [
         'site_id',
+        'asset_id', // Link to Asset if tracked as asset
         'name',
         'code',
         'production_type',
@@ -38,6 +39,11 @@ class Factory extends Model
     public function site()
     {
         return $this->belongsTo(Site::class);
+    }
+
+    public function asset()
+    {
+        return $this->belongsTo(Asset::class, 'asset_id');
     }
 
     // Staff assignments to this factory

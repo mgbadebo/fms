@@ -4,12 +4,18 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Factory;
+use App\Models\Site;
+use App\Services\Factory\FactoryAssetService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 
 class FactoryController extends Controller
 {
+    public function __construct(
+        protected FactoryAssetService $factoryAssetService
+    ) {}
+
     /**
      * Check if user has admin permission
      */
@@ -25,7 +31,7 @@ class FactoryController extends Controller
     public function index(Request $request): JsonResponse
     {
         // Allow reading factories without admin permission (needed for production batch creation)
-        $query = Factory::with(['site']);
+        $query = Factory::with(['site', 'asset']);
 
         if ($request->has('site_id')) {
             $query->where('site_id', $request->site_id);
@@ -68,7 +74,25 @@ class FactoryController extends Controller
             'equipment' => 'nullable|array',
             'metadata' => 'nullable|array',
             'is_active' => 'boolean',
+            // Asset fields
+            'track_as_asset' => 'boolean',
+            'asset_category_id' => 'nullable|exists:asset_categories,id',
+            'asset_description' => 'nullable|string',
+            'asset_acquisition_type' => 'nullable|string',
+            'asset_purchase_date' => 'nullable|date',
+            'asset_purchase_cost' => 'nullable|numeric|min:0',
+            'asset_currency' => 'nullable|string|max:3',
+            'asset_supplier_name' => 'nullable|string|max:255',
+            'asset_serial_number' => 'nullable|string|max:255',
+            'asset_model' => 'nullable|string|max:255',
+            'asset_manufacturer' => 'nullable|string|max:255',
+            'asset_year_of_make' => 'nullable|integer|min:1900',
+            'asset_warranty_expiry' => 'nullable|date',
+            'asset_is_trackable' => 'boolean',
         ]);
+
+        // Load the site to get farm_id
+        $site = Site::findOrFail($validated['site_id']);
 
         // Generate code if not provided
         if (!isset($validated['code'])) {
@@ -83,7 +107,31 @@ class FactoryController extends Controller
 
         $factory = Factory::create($validated);
 
-        return response()->json(['data' => $factory->load('site')], 201);
+        // Create asset only if track_as_asset is checked
+        $trackAsAsset = $request->boolean('track_as_asset', false);
+        
+        if ($trackAsAsset && empty($validated['asset_id'])) {
+            // Extract asset data from validated array (keys prefixed with 'asset_')
+            $assetData = [];
+            foreach ($validated as $key => $value) {
+                if (str_starts_with($key, 'asset_')) {
+                    // Remove 'asset_' prefix for the service
+                    $assetKey = substr($key, 6); // Remove 'asset_' (6 characters)
+                    $assetData[$assetKey] = $value;
+                }
+            }
+            
+            $asset = $this->factoryAssetService->createAssetForFactory(
+                $site->farm_id, 
+                $validated['site_id'], 
+                $validated['name'],
+                $assetData
+            );
+            $factory->asset_id = $asset->id;
+            $factory->save();
+        }
+
+        return response()->json(['data' => $factory->load('site', 'asset')], 201);
     }
 
     public function show(string $id): JsonResponse
@@ -93,7 +141,7 @@ class FactoryController extends Controller
             return $permissionCheck;
         }
 
-        $factory = Factory::with(['site', 'staffAssignments.worker', 'gariProductionBatches'])->findOrFail($id);
+        $factory = Factory::with(['site', 'asset', 'staffAssignments.worker', 'gariProductionBatches'])->findOrFail($id);
         return response()->json(['data' => $factory]);
     }
 
@@ -116,11 +164,54 @@ class FactoryController extends Controller
             'equipment' => 'nullable|array',
             'metadata' => 'nullable|array',
             'is_active' => 'boolean',
+            // Asset fields
+            'track_as_asset' => 'boolean',
+            'asset_category_id' => 'nullable|exists:asset_categories,id',
+            'asset_description' => 'nullable|string',
+            'asset_acquisition_type' => 'nullable|string',
+            'asset_purchase_date' => 'nullable|date',
+            'asset_purchase_cost' => 'nullable|numeric|min:0',
+            'asset_currency' => 'nullable|string|max:3',
+            'asset_supplier_name' => 'nullable|string|max:255',
+            'asset_serial_number' => 'nullable|string|max:255',
+            'asset_model' => 'nullable|string|max:255',
+            'asset_manufacturer' => 'nullable|string|max:255',
+            'asset_year_of_make' => 'nullable|integer|min:1900',
+            'asset_warranty_expiry' => 'nullable|date',
+            'asset_is_trackable' => 'boolean',
         ]);
 
         $factory->update($validated);
 
-        return response()->json(['data' => $factory->load('site')]);
+        // Handle asset creation/update if track_as_asset is checked
+        $trackAsAsset = $request->boolean('track_as_asset', false);
+        
+        if ($trackAsAsset && !$factory->asset_id) {
+            // Create new asset if tracking as asset but no asset exists
+            $site = $factory->site;
+            $assetData = [];
+            foreach ($validated as $key => $value) {
+                if (str_starts_with($key, 'asset_')) {
+                    $assetKey = substr($key, 6);
+                    $assetData[$assetKey] = $value;
+                }
+            }
+            
+            $asset = $this->factoryAssetService->createAssetForFactory(
+                $site->farm_id,
+                $factory->site_id,
+                $factory->name,
+                $assetData
+            );
+            $factory->asset_id = $asset->id;
+            $factory->save();
+        } elseif (!$trackAsAsset && $factory->asset_id) {
+            // Remove asset link if untracking
+            $factory->asset_id = null;
+            $factory->save();
+        }
+
+        return response()->json(['data' => $factory->load('site', 'asset')]);
     }
 
     public function destroy(string $id): JsonResponse

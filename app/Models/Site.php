@@ -12,6 +12,7 @@ class Site extends Model
 
     protected $fillable = [
         'farm_id',
+        'asset_id', // Link to Asset if tracked as asset
         'name',
         'code',
         'type',
@@ -43,6 +44,10 @@ class Site extends Model
         return $this->belongsTo(Farm::class);
     }
 
+    public function asset()
+    {
+        return $this->belongsTo(Asset::class, 'asset_id');
+    }
 
     // Site type specific relationships
     public function farmZones()

@@ -39,6 +39,7 @@ export default function Layout({ children }) {
     const navigate = useNavigate();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [userPermissions, setUserPermissions] = useState([]);
+    const [logoError, setLogoError] = useState(false);
     
     // Auto-expand groups based on current route - all collapsed by default
     const getInitialExpandedGroups = () => {
@@ -90,19 +91,6 @@ export default function Layout({ children }) {
 
     const navigationGroups = [
         {
-            name: 'Gari',
-            key: 'gari',
-            icon: Factory,
-            items: [
-                { name: 'Production Batches', href: '/gari-production-batches', icon: Factory },
-                { name: 'Inventory', href: '/gari-inventory', icon: Package },
-                { name: 'Sales', href: '/gari-sales', icon: ShoppingCart },
-                { name: 'KPIs', href: '/gari-kpis', icon: TrendingUp },
-                { name: 'Waste & Losses', href: '/gari-waste-losses', icon: TrendingUp },
-                { name: 'Packaging Materials', href: '/packaging-materials', icon: Package },
-            ],
-        },
-        {
             name: 'Bell Pepper',
             key: 'bellPepper',
             icon: Sprout,
@@ -112,6 +100,17 @@ export default function Layout({ children }) {
                 { name: 'Inventory', href: '/bell-pepper-inventory', icon: Package },
                 { name: 'Sales', href: '/bell-pepper-sales', icon: ShoppingCart },
                 { name: 'KPIs', href: '/bell-pepper-kpis', icon: TrendingUp },
+            ],
+        },
+        {
+            name: 'Habaneros',
+            key: 'habaneros',
+            icon: Sprout,
+            items: [
+                { name: 'Production', href: '/habaneros-production', icon: Factory },
+                { name: 'Inventory', href: '/habaneros-inventory', icon: Package },
+                { name: 'Sales', href: '/habaneros-sales', icon: ShoppingCart },
+                { name: 'KPIs', href: '/habaneros-kpis', icon: TrendingUp },
             ],
         },
         {
@@ -126,14 +125,16 @@ export default function Layout({ children }) {
             ],
         },
         {
-            name: 'Habaneros',
-            key: 'habaneros',
-            icon: Sprout,
+            name: 'Gari',
+            key: 'gari',
+            icon: Factory,
             items: [
-                { name: 'Production', href: '/habaneros-production', icon: Factory },
-                { name: 'Inventory', href: '/habaneros-inventory', icon: Package },
-                { name: 'Sales', href: '/habaneros-sales', icon: ShoppingCart },
-                { name: 'KPIs', href: '/habaneros-kpis', icon: TrendingUp },
+                { name: 'Production Batches', href: '/gari-production-batches', icon: Factory },
+                { name: 'Inventory', href: '/gari-inventory', icon: Package },
+                { name: 'Sales', href: '/gari-sales', icon: ShoppingCart },
+                { name: 'KPIs', href: '/gari-kpis', icon: TrendingUp },
+                { name: 'Waste & Losses', href: '/gari-waste-losses', icon: TrendingUp },
+                { name: 'Packaging Materials', href: '/packaging-materials', icon: Package },
             ],
         },
         {
@@ -324,9 +325,18 @@ export default function Layout({ children }) {
             {/* Sidebar */}
             <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
                 <div className="flex flex-col h-full bg-white border-r border-gray-200">
-                    <div className="flex items-center flex-shrink-0 px-4 py-6 border-b border-gray-200">
-                        <Tractor className="h-8 w-8 text-green-600" />
-                        <h1 className="ml-2 text-xl font-bold text-gray-900">FMS</h1>
+                    <div className="flex items-center flex-shrink-0 px-4 py-4 border-b border-gray-200 flex-nowrap">
+                        {logoError ? (
+                            <Tractor className="h-8 w-8 text-green-600 flex-shrink-0" />
+                        ) : (
+                            <img 
+                                src="/images/ogenki-logo.png" 
+                                alt="Ogenki Farms" 
+                                className="h-12 w-auto object-contain max-w-[120px] flex-shrink-0"
+                                onError={() => setLogoError(true)}
+                            />
+                        )}
+                        <h1 className="ml-2 text-sm font-bold text-gray-900 whitespace-nowrap truncate">Ogenki Farms</h1>
                     </div>
                     <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                         <nav className="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
@@ -365,9 +375,18 @@ export default function Layout({ children }) {
             {/* Mobile menu */}
             <div className="md:hidden">
                 <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-                    <div className="flex items-center">
-                        <Tractor className="h-6 w-6 text-green-600" />
-                        <h1 className="ml-2 text-lg font-bold text-gray-900">FMS</h1>
+                    <div className="flex items-center flex-nowrap flex-1 min-w-0">
+                        {logoError ? (
+                            <Tractor className="h-6 w-6 text-green-600 flex-shrink-0" />
+                        ) : (
+                            <img 
+                                src="/images/ogenki-logo.png" 
+                                alt="Ogenki Farms" 
+                                className="h-10 w-auto object-contain max-w-[100px] flex-shrink-0"
+                                onError={() => setLogoError(true)}
+                            />
+                        )}
+                        <h1 className="ml-2 text-sm font-bold text-gray-900 whitespace-nowrap truncate">Ogenki Farms</h1>
                     </div>
                     <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

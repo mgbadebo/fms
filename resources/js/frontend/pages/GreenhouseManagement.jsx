@@ -5,9 +5,11 @@ import { Factory, Plus, Edit, Trash2, Search } from 'lucide-react';
 export default function GreenhouseManagement() {
     const [greenhouses, setGreenhouses] = useState([]);
     const [sites, setSites] = useState([]);
+    const [assetCategories, setAssetCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingGreenhouse, setEditingGreenhouse] = useState(null);
+    const [trackAsAsset, setTrackAsAsset] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
     const [filterType, setFilterType] = useState('');
@@ -24,6 +26,21 @@ export default function GreenhouseManagement() {
         primary_crop_type: '',
         cropping_system: '',
         notes: '',
+        // Asset fields
+        track_as_asset: false,
+        asset_category_id: '',
+        asset_description: '',
+        asset_acquisition_type: '',
+        asset_purchase_date: '',
+        asset_purchase_cost: '',
+        asset_currency: 'NGN',
+        asset_supplier_name: '',
+        asset_serial_number: '',
+        asset_model: '',
+        asset_manufacturer: '',
+        asset_year_of_make: '',
+        asset_warranty_expiry: '',
+        asset_is_trackable: false,
     });
 
     useEffect(() => {
@@ -37,9 +54,10 @@ export default function GreenhouseManagement() {
             if (filterStatus) params.append('status', filterStatus);
             if (filterType) params.append('type', filterType);
             
-            const [greenhousesRes, sitesRes] = await Promise.all([
+            const [greenhousesRes, sitesRes, categoriesRes] = await Promise.all([
                 api.get(`/api/v1/greenhouses?${params.toString()}`),
                 api.get('/api/v1/sites?per_page=1000'),
+                api.get('/api/v1/asset-categories?per_page=1000'),
             ]);
             
             const greenhousesData = greenhousesRes.data;
@@ -49,6 +67,17 @@ export default function GreenhouseManagement() {
             const sitesData = sitesRes.data;
             const sitesArray = sitesData?.data || (Array.isArray(sitesData) ? sitesData : []);
             setSites(sitesArray);
+            
+            // Parse asset categories response
+            let categoriesArray = [];
+            if (categoriesRes.data) {
+                if (Array.isArray(categoriesRes.data)) {
+                    categoriesArray = categoriesRes.data;
+                } else if (categoriesRes.data.data && Array.isArray(categoriesRes.data.data)) {
+                    categoriesArray = categoriesRes.data.data;
+                }
+            }
+            setAssetCategories(categoriesArray);
         } catch (error) {
             console.error('Error fetching data:', error);
             alert('Error loading data: ' + (error.response?.data?.message || error.message));
@@ -60,6 +89,7 @@ export default function GreenhouseManagement() {
     const handleModalOpen = () => {
         setShowModal(true);
         setEditingGreenhouse(null);
+        setTrackAsAsset(false);
         setFormData({
             site_id: '',
             name: '',
@@ -73,11 +103,27 @@ export default function GreenhouseManagement() {
             primary_crop_type: '',
             cropping_system: '',
             notes: '',
+            track_as_asset: false,
+            asset_category_id: '',
+            asset_description: '',
+            asset_acquisition_type: '',
+            asset_purchase_date: '',
+            asset_purchase_cost: '',
+            asset_currency: 'NGN',
+            asset_supplier_name: '',
+            asset_serial_number: '',
+            asset_model: '',
+            asset_manufacturer: '',
+            asset_year_of_make: '',
+            asset_warranty_expiry: '',
+            asset_is_trackable: false,
         });
     };
 
     const handleEdit = (greenhouse) => {
         setEditingGreenhouse(greenhouse);
+        const hasAsset = !!greenhouse.asset_id;
+        setTrackAsAsset(hasAsset);
         setFormData({
             site_id: greenhouse.site?.id || '',
             name: greenhouse.name || '',
@@ -91,6 +137,20 @@ export default function GreenhouseManagement() {
             primary_crop_type: greenhouse.primary_crop_type || '',
             cropping_system: greenhouse.cropping_system || '',
             notes: greenhouse.notes || '',
+            track_as_asset: hasAsset,
+            asset_category_id: greenhouse.asset?.asset_category_id || '',
+            asset_description: greenhouse.asset?.description || '',
+            asset_acquisition_type: greenhouse.asset?.acquisition_type || '',
+            asset_purchase_date: greenhouse.asset?.purchase_date ? new Date(greenhouse.asset.purchase_date).toISOString().slice(0, 10) : '',
+            asset_purchase_cost: greenhouse.asset?.purchase_cost || '',
+            asset_currency: greenhouse.asset?.currency || 'NGN',
+            asset_supplier_name: greenhouse.asset?.supplier_name || '',
+            asset_serial_number: greenhouse.asset?.serial_number || '',
+            asset_model: greenhouse.asset?.model || '',
+            asset_manufacturer: greenhouse.asset?.manufacturer || '',
+            asset_year_of_make: greenhouse.asset?.year_of_make || '',
+            asset_warranty_expiry: greenhouse.asset?.warranty_expiry ? new Date(greenhouse.asset.warranty_expiry).toISOString().slice(0, 10) : '',
+            asset_is_trackable: greenhouse.asset?.is_trackable || false,
         });
         setShowModal(true);
     };
@@ -98,7 +158,19 @@ export default function GreenhouseManagement() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            // Prepare data to send
             const payload = { ...formData };
+            payload.track_as_asset = trackAsAsset;
+            
+            // Only include asset fields if track_as_asset is checked
+            if (!trackAsAsset) {
+                // Remove all asset fields if not tracking as asset
+                Object.keys(payload).forEach(key => {
+                    if (key.startsWith('asset_')) {
+                        delete payload[key];
+                    }
+                });
+            }
             
             if (editingGreenhouse) {
                 await api.patch(`/api/v1/greenhouses/${editingGreenhouse.id}`, payload);
@@ -434,6 +506,168 @@ export default function GreenhouseManagement() {
                                     </select>
                                 </div>
                             </div>
+                            
+                            {/* Track as Asset Checkbox */}
+                            <div className="md:col-span-2">
+                                <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                                    <input
+                                        type="checkbox"
+                                        checked={trackAsAsset}
+                                        onChange={(e) => {
+                                            setTrackAsAsset(e.target.checked);
+                                            setFormData({ ...formData, track_as_asset: e.target.checked });
+                                        }}
+                                        className="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-2"
+                                    />
+                                    <span>Track as Asset</span>
+                                </label>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Check this box to create an asset record for this greenhouse. You can enter asset details below.
+                                </p>
+                            </div>
+                            
+                            {/* Asset Fields - Conditional */}
+                            {trackAsAsset && (
+                                <>
+                                    <div className="md:col-span-2 border-t pt-4 mt-2">
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Asset Information</h3>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Asset Category</label>
+                                        <select
+                                            value={formData.asset_category_id}
+                                            onChange={(e) => setFormData({ ...formData, asset_category_id: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                        >
+                                            <option value="">Select category</option>
+                                            {assetCategories.map((cat) => (
+                                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Acquisition Type</label>
+                                        <select
+                                            value={formData.asset_acquisition_type}
+                                            onChange={(e) => setFormData({ ...formData, asset_acquisition_type: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                        >
+                                            <option value="">Select type</option>
+                                            <option value="PURCHASED">Purchased</option>
+                                            <option value="LEASED">Leased</option>
+                                            <option value="RENTED">Rented</option>
+                                            <option value="DONATED">Donated</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Date</label>
+                                        <input
+                                            type="date"
+                                            value={formData.asset_purchase_date}
+                                            onChange={(e) => setFormData({ ...formData, asset_purchase_date: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Cost</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={formData.asset_purchase_cost}
+                                            onChange={(e) => setFormData({ ...formData, asset_purchase_cost: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                                        <input
+                                            type="text"
+                                            maxLength={3}
+                                            value={formData.asset_currency}
+                                            onChange={(e) => setFormData({ ...formData, asset_currency: e.target.value.toUpperCase() })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                            placeholder="NGN"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Supplier Name</label>
+                                        <input
+                                            type="text"
+                                            value={formData.asset_supplier_name}
+                                            onChange={(e) => setFormData({ ...formData, asset_supplier_name: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Serial Number</label>
+                                        <input
+                                            type="text"
+                                            value={formData.asset_serial_number}
+                                            onChange={(e) => setFormData({ ...formData, asset_serial_number: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                                        <input
+                                            type="text"
+                                            value={formData.asset_model}
+                                            onChange={(e) => setFormData({ ...formData, asset_model: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Manufacturer</label>
+                                        <input
+                                            type="text"
+                                            value={formData.asset_manufacturer}
+                                            onChange={(e) => setFormData({ ...formData, asset_manufacturer: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Year of Make</label>
+                                        <input
+                                            type="number"
+                                            min="1900"
+                                            max={new Date().getFullYear() + 1}
+                                            value={formData.asset_year_of_make}
+                                            onChange={(e) => setFormData({ ...formData, asset_year_of_make: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Warranty Expiry</label>
+                                        <input
+                                            type="date"
+                                            value={formData.asset_warranty_expiry}
+                                            onChange={(e) => setFormData({ ...formData, asset_warranty_expiry: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Asset Description</label>
+                                        <textarea
+                                            value={formData.asset_description}
+                                            onChange={(e) => setFormData({ ...formData, asset_description: e.target.value })}
+                                            rows={2}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.asset_is_trackable}
+                                                onChange={(e) => setFormData({ ...formData, asset_is_trackable: e.target.checked })}
+                                                className="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-2"
+                                            />
+                                            <span>Is Trackable</span>
+                                        </label>
+                                    </div>
+                                </>
+                            )}
+                            
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
                                 <textarea

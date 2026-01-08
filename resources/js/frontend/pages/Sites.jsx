@@ -5,9 +5,11 @@ import { Warehouse, Plus, Edit, Trash2 } from 'lucide-react';
 export default function Sites() {
     const [sites, setSites] = useState([]);
     const [farms, setFarms] = useState([]);
+    const [assetCategories, setAssetCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingSite, setEditingSite] = useState(null);
+    const [trackAsAsset, setTrackAsAsset] = useState(false);
     const [formData, setFormData] = useState({
         farm_id: '',
         name: '',
@@ -21,11 +23,27 @@ export default function Sites() {
         area_unit: 'hectares',
         notes: '',
         is_active: true,
+        // Asset fields
+        track_as_asset: false,
+        asset_category_id: '',
+        asset_description: '',
+        asset_acquisition_type: '',
+        asset_purchase_date: '',
+        asset_purchase_cost: '',
+        asset_currency: 'NGN',
+        asset_supplier_name: '',
+        asset_serial_number: '',
+        asset_model: '',
+        asset_manufacturer: '',
+        asset_year_of_make: '',
+        asset_warranty_expiry: '',
+        asset_is_trackable: false,
     });
 
     useEffect(() => {
         fetchData();
         fetchFarms();
+        fetchAssetCategories();
     }, []);
 
     const fetchData = async () => {
@@ -74,9 +92,27 @@ export default function Sites() {
         }
     };
 
+    const fetchAssetCategories = async () => {
+        try {
+            const response = await api.get('/api/v1/asset-categories?per_page=1000');
+            let categoriesArray = [];
+            if (response.data) {
+                if (Array.isArray(response.data)) {
+                    categoriesArray = response.data;
+                } else if (response.data.data && Array.isArray(response.data.data)) {
+                    categoriesArray = response.data.data;
+                }
+            }
+            setAssetCategories(categoriesArray);
+        } catch (error) {
+            console.error('Error fetching asset categories:', error);
+            setAssetCategories([]);
+        }
+    };
 
     const handleModalOpen = () => {
         setEditingSite(null);
+        setTrackAsAsset(false);
         setFormData({
             farm_id: '',
             name: '',
@@ -90,12 +126,28 @@ export default function Sites() {
             area_unit: 'hectares',
             notes: '',
             is_active: true,
+            track_as_asset: false,
+            asset_category_id: '',
+            asset_description: '',
+            asset_acquisition_type: '',
+            asset_purchase_date: '',
+            asset_purchase_cost: '',
+            asset_currency: 'NGN',
+            asset_supplier_name: '',
+            asset_serial_number: '',
+            asset_model: '',
+            asset_manufacturer: '',
+            asset_year_of_make: '',
+            asset_warranty_expiry: '',
+            asset_is_trackable: false,
         });
         setShowModal(true);
     };
 
     const handleEdit = (site) => {
         setEditingSite(site);
+        const hasAsset = !!site.asset_id;
+        setTrackAsAsset(hasAsset);
         setFormData({
             farm_id: site.farm_id || '',
             name: site.name || '',
@@ -109,6 +161,20 @@ export default function Sites() {
             area_unit: site.area_unit || 'hectares',
             notes: site.notes || '',
             is_active: site.is_active !== undefined ? site.is_active : true,
+            track_as_asset: hasAsset,
+            asset_category_id: site.asset?.asset_category_id || '',
+            asset_description: site.asset?.description || '',
+            asset_acquisition_type: site.asset?.acquisition_type || '',
+            asset_purchase_date: site.asset?.purchase_date ? new Date(site.asset.purchase_date).toISOString().slice(0, 10) : '',
+            asset_purchase_cost: site.asset?.purchase_cost || '',
+            asset_currency: site.asset?.currency || 'NGN',
+            asset_supplier_name: site.asset?.supplier_name || '',
+            asset_serial_number: site.asset?.serial_number || '',
+            asset_model: site.asset?.model || '',
+            asset_manufacturer: site.asset?.manufacturer || '',
+            asset_year_of_make: site.asset?.year_of_make || '',
+            asset_warranty_expiry: site.asset?.warranty_expiry ? new Date(site.asset.warranty_expiry).toISOString().slice(0, 10) : '',
+            asset_is_trackable: site.asset?.is_trackable || false,
         });
         setShowModal(true);
     };
@@ -116,10 +182,24 @@ export default function Sites() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            // Prepare data to send
+            const payload = { ...formData };
+            payload.track_as_asset = trackAsAsset;
+            
+            // Only include asset fields if track_as_asset is checked
+            if (!trackAsAsset) {
+                // Remove all asset fields if not tracking as asset
+                Object.keys(payload).forEach(key => {
+                    if (key.startsWith('asset_')) {
+                        delete payload[key];
+                    }
+                });
+            }
+            
             if (editingSite) {
-                await api.put(`/api/v1/sites/${editingSite.id}`, formData);
+                await api.put(`/api/v1/sites/${editingSite.id}`, payload);
             } else {
-                await api.post('/api/v1/sites', formData);
+                await api.post('/api/v1/sites', payload);
             }
             setShowModal(false);
             fetchData();
@@ -332,6 +412,168 @@ export default function Sites() {
                                         rows="3"
                                     />
                                 </div>
+                                
+                                {/* Track as Asset Checkbox */}
+                                <div className="col-span-2">
+                                    <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                                        <input
+                                            type="checkbox"
+                                            checked={trackAsAsset}
+                                            onChange={(e) => {
+                                                setTrackAsAsset(e.target.checked);
+                                                setFormData({ ...formData, track_as_asset: e.target.checked });
+                                            }}
+                                            className="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-2"
+                                        />
+                                        <span>Track as Asset</span>
+                                    </label>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Check this box to create an asset record for this site. You can enter asset details below.
+                                    </p>
+                                </div>
+                                
+                                {/* Asset Fields - Conditional */}
+                                {trackAsAsset && (
+                                    <>
+                                        <div className="col-span-2 border-t pt-4 mt-2">
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Asset Information</h3>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Asset Category</label>
+                                            <select
+                                                value={formData.asset_category_id}
+                                                onChange={(e) => setFormData({ ...formData, asset_category_id: e.target.value })}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500"
+                                            >
+                                                <option value="">Select category</option>
+                                                {assetCategories.map((cat) => (
+                                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Acquisition Type</label>
+                                            <select
+                                                value={formData.asset_acquisition_type}
+                                                onChange={(e) => setFormData({ ...formData, asset_acquisition_type: e.target.value })}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500"
+                                            >
+                                                <option value="">Select type</option>
+                                                <option value="PURCHASED">Purchased</option>
+                                                <option value="LEASED">Leased</option>
+                                                <option value="RENTED">Rented</option>
+                                                <option value="DONATED">Donated</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Date</label>
+                                            <input
+                                                type="date"
+                                                value={formData.asset_purchase_date}
+                                                onChange={(e) => setFormData({ ...formData, asset_purchase_date: e.target.value })}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Cost</label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={formData.asset_purchase_cost}
+                                                onChange={(e) => setFormData({ ...formData, asset_purchase_cost: e.target.value })}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                                            <input
+                                                type="text"
+                                                maxLength={3}
+                                                value={formData.asset_currency}
+                                                onChange={(e) => setFormData({ ...formData, asset_currency: e.target.value.toUpperCase() })}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500"
+                                                placeholder="NGN"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Supplier Name</label>
+                                            <input
+                                                type="text"
+                                                value={formData.asset_supplier_name}
+                                                onChange={(e) => setFormData({ ...formData, asset_supplier_name: e.target.value })}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Serial Number</label>
+                                            <input
+                                                type="text"
+                                                value={formData.asset_serial_number}
+                                                onChange={(e) => setFormData({ ...formData, asset_serial_number: e.target.value })}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                                            <input
+                                                type="text"
+                                                value={formData.asset_model}
+                                                onChange={(e) => setFormData({ ...formData, asset_model: e.target.value })}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Manufacturer</label>
+                                            <input
+                                                type="text"
+                                                value={formData.asset_manufacturer}
+                                                onChange={(e) => setFormData({ ...formData, asset_manufacturer: e.target.value })}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Year of Make</label>
+                                            <input
+                                                type="number"
+                                                min="1900"
+                                                max={new Date().getFullYear() + 1}
+                                                value={formData.asset_year_of_make}
+                                                onChange={(e) => setFormData({ ...formData, asset_year_of_make: e.target.value })}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Warranty Expiry</label>
+                                            <input
+                                                type="date"
+                                                value={formData.asset_warranty_expiry}
+                                                onChange={(e) => setFormData({ ...formData, asset_warranty_expiry: e.target.value })}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500"
+                                            />
+                                        </div>
+                                        <div className="col-span-2">
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Asset Description</label>
+                                            <textarea
+                                                value={formData.asset_description}
+                                                onChange={(e) => setFormData({ ...formData, asset_description: e.target.value })}
+                                                rows={2}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500"
+                                            />
+                                        </div>
+                                        <div className="col-span-2">
+                                            <label className="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.asset_is_trackable}
+                                                    onChange={(e) => setFormData({ ...formData, asset_is_trackable: e.target.checked })}
+                                                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                                />
+                                                <span className="text-sm font-medium text-gray-700">Is Trackable</span>
+                                            </label>
+                                        </div>
+                                    </>
+                                )}
+                                
                                 <div className="col-span-2">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
                                     <textarea

@@ -47,9 +47,15 @@ class StoreGreenhouseRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        // Reject farm_id if provided
+        // Reject farm_id and greenhouse_code if provided (auto-generated/derived)
         if ($this->has('farm_id')) {
             $this->merge(['farm_id' => null]);
+        }
+        if ($this->has('greenhouse_code')) {
+            $this->merge(['greenhouse_code' => null]);
+        }
+        if ($this->has('asset_id')) {
+            $this->merge(['asset_id' => null]);
         }
     }
 
@@ -61,16 +67,13 @@ class StoreGreenhouseRequest extends FormRequest
     public function rules(): array
     {
         $siteId = $this->input('site_id');
+        $trackAsAsset = $this->boolean('track_as_asset', false);
         
-        return [
+        $rules = [
             'site_id' => 'required|exists:sites,id',
             'greenhouse_code' => [
                 'nullable',
-                'string',
-                'max:50',
-                Rule::unique('greenhouses', 'greenhouse_code')->where(function ($query) use ($siteId) {
-                    return $query->where('site_id', $siteId);
-                }),
+                'prohibited', // Auto-generated, not allowed from client
             ],
             'name' => 'required|string|max:255',
             'type' => 'required|in:TUNNEL,GLASSHOUSE,POLYHOUSE,SHADE_HOUSE',
@@ -85,7 +88,30 @@ class StoreGreenhouseRequest extends FormRequest
             'notes' => 'nullable|string',
             // Reject farm_id explicitly
             'farm_id' => 'prohibited',
+            // Asset tracking checkbox
+            'track_as_asset' => ['boolean'],
         ];
+        
+        // If tracking as asset, add asset field validation
+        if ($trackAsAsset) {
+            $rules = array_merge($rules, [
+                'asset_category_id' => ['nullable','exists:asset_categories,id'],
+                'asset_description' => ['nullable','string'],
+                'asset_acquisition_type' => ['nullable','in:PURCHASED,LEASED,RENTED,DONATED'],
+                'asset_purchase_date' => ['nullable','date'],
+                'asset_purchase_cost' => ['nullable','numeric','min:0'],
+                'asset_currency' => ['nullable','string','size:3'],
+                'asset_supplier_name' => ['nullable','string','max:255'],
+                'asset_serial_number' => ['nullable','string','max:255'],
+                'asset_model' => ['nullable','string','max:255'],
+                'asset_manufacturer' => ['nullable','string','max:255'],
+                'asset_year_of_make' => ['nullable','integer','min:1900','max:' . (date('Y') + 1)],
+                'asset_warranty_expiry' => ['nullable','date'],
+                'asset_is_trackable' => ['boolean'],
+            ]);
+        }
+        
+        return $rules;
     }
 
     /**

@@ -13,6 +13,7 @@ class Greenhouse extends Model
     protected $fillable = [
         'farm_id', // Derived from site, not set directly by client
         'site_id',
+        'asset_id', // Link to Asset if tracked as asset
         'code',
         'greenhouse_code',
         'kit_id',
@@ -152,6 +153,11 @@ class Greenhouse extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+    
+    public function asset()
+    {
+        return $this->belongsTo(Asset::class, 'asset_id');
     }
     
     /**
