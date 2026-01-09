@@ -84,7 +84,7 @@ class SiteController extends Controller
             'farm_id' => 'nullable|exists:farms,id',
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|unique:sites,code',
-            'type' => 'required|in:farmland,warehouse,factory,greenhouse,estate',
+            'type' => 'required|exists:site_types,code',
             'description' => 'nullable|string',
             'address' => 'nullable|string',
             'latitude' => 'nullable|numeric|between:-90,90',
@@ -120,14 +120,8 @@ class SiteController extends Controller
 
         // Generate code if not provided
         if (!isset($validated['code'])) {
-            $prefix = match($validated['type']) {
-                'farmland' => 'FL',
-                'warehouse' => 'WH',
-                'factory' => 'FT',
-                'greenhouse' => 'GH',
-                'estate' => 'EST',
-                default => 'ST'
-            };
+            $siteType = \App\Models\SiteType::where('code', $validated['type'])->first();
+            $prefix = $siteType?->code_prefix ?? 'ST';
             $validated['code'] = $prefix . '-' . strtoupper(Str::random(8));
         }
 
@@ -194,7 +188,7 @@ class SiteController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'code' => 'sometimes|string|unique:sites,code,' . $id,
-            'type' => 'sometimes|in:farmland,warehouse,factory,greenhouse,estate',
+            'type' => 'sometimes|exists:site_types,code',
             'description' => 'nullable|string',
             'address' => 'nullable|string',
             'latitude' => 'nullable|numeric|between:-90,90',

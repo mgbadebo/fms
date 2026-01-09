@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\V1\FactoryController;
 use App\Http\Controllers\Api\V1\StaffAssignmentController;
 use App\Http\Controllers\Api\V1\WorkerController;
 use App\Http\Controllers\Api\V1\AssetCategoryController;
+use App\Http\Controllers\Api\V1\SiteTypeController;
 use App\Http\Controllers\Api\V1\AssetController;
 use App\Http\Controllers\Api\V1\AssetAssignmentController;
 use App\Http\Controllers\Api\V1\WorkerJobRoleController;
@@ -183,6 +184,7 @@ Route::prefix('v1')->group(function () {
         
         // Site Management (Admin only)
         Route::apiResource('sites', SiteController::class);
+        Route::apiResource('site-types', SiteTypeController::class);
         
         // Farm Zone Management (Admin only)
         Route::apiResource('farm-zones', FarmZoneController::class);

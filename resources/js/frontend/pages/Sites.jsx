@@ -5,6 +5,7 @@ import { Warehouse, Plus, Edit, Trash2 } from 'lucide-react';
 export default function Sites() {
     const [sites, setSites] = useState([]);
     const [farms, setFarms] = useState([]);
+    const [siteTypes, setSiteTypes] = useState([]);
     const [assetCategories, setAssetCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -14,7 +15,7 @@ export default function Sites() {
         farm_id: '',
         name: '',
         code: '',
-        type: 'farmland',
+        type: '',
         description: '',
         address: '',
         latitude: '',
@@ -43,6 +44,7 @@ export default function Sites() {
     useEffect(() => {
         fetchData();
         fetchFarms();
+        fetchSiteTypes();
         fetchAssetCategories();
     }, []);
 
@@ -92,6 +94,24 @@ export default function Sites() {
         }
     };
 
+    const fetchSiteTypes = async () => {
+        try {
+            const response = await api.get('/api/v1/site-types?per_page=1000&is_active=true');
+            let typesArray = [];
+            if (response.data) {
+                if (Array.isArray(response.data)) {
+                    typesArray = response.data;
+                } else if (response.data.data && Array.isArray(response.data.data)) {
+                    typesArray = response.data.data;
+                }
+            }
+            setSiteTypes(typesArray);
+        } catch (error) {
+            console.error('Error fetching site types:', error);
+            setSiteTypes([]);
+        }
+    };
+
     const fetchAssetCategories = async () => {
         try {
             const response = await api.get('/api/v1/asset-categories?per_page=1000');
@@ -113,11 +133,12 @@ export default function Sites() {
     const handleModalOpen = () => {
         setEditingSite(null);
         setTrackAsAsset(false);
+        const defaultType = siteTypes.length > 0 ? siteTypes[0].code : '';
         setFormData({
             farm_id: '',
             name: '',
             code: '',
-            type: 'farmland',
+            type: defaultType,
             description: '',
             address: '',
             latitude: '',
@@ -221,14 +242,8 @@ export default function Sites() {
     };
 
     const getTypeLabel = (type) => {
-        const types = {
-            farmland: 'Farmland',
-            warehouse: 'Warehouse',
-            factory: 'Factory',
-            greenhouse: 'Greenhouse',
-            estate: 'Estate',
-        };
-        return types[type] || type;
+        const siteType = siteTypes.find(st => st.code === type);
+        return siteType ? siteType.name : type;
     };
 
     if (loading) {
@@ -325,11 +340,14 @@ export default function Sites() {
                                         onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                                         className="w-full border border-gray-300 rounded-lg px-3 py-2"
                                     >
-                                        <option value="farmland">Farmland</option>
-                                        <option value="warehouse">Warehouse</option>
-                                        <option value="factory">Factory</option>
-                                        <option value="greenhouse">Greenhouse</option>
-                                        <option value="estate">Estate</option>
+                                        <option value="">Select type</option>
+                                        {siteTypes
+                                            .filter(st => st.is_active)
+                                            .map((siteType) => (
+                                                <option key={siteType.id} value={siteType.code}>
+                                                    {siteType.name}
+                                                </option>
+                                            ))}
                                     </select>
                                 </div>
                                 <div>

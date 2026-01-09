@@ -49,6 +49,11 @@ class Site extends Model
         return $this->belongsTo(Asset::class, 'asset_id');
     }
 
+    public function siteType()
+    {
+        return $this->belongsTo(SiteType::class, 'type', 'code');
+    }
+
     // Site type specific relationships
     public function farmZones()
     {

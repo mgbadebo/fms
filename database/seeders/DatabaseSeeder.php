@@ -13,6 +13,8 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Database\Seeders\SiteTypeSeeder;
+use Database\Seeders\MenuPermissionSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -127,6 +129,12 @@ class DatabaseSeeder extends Seeder
                 'is_default' => true,
             ]
         );
+
+        // Seed site types (should be early as other features may depend on it)
+        $this->call(SiteTypeSeeder::class);
+        
+        // Seed menu permissions (must be after roles are created)
+        $this->call(MenuPermissionSeeder::class);
 
         $this->command->info('Database seeded successfully!');
         $this->command->info('Admin user: admin@fms.test / password');

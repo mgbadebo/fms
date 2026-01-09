@@ -34,6 +34,7 @@ import Assets from './pages/Assets';
 import AssetCategories from './pages/AssetCategories';
 import WorkerJobRoles from './pages/WorkerJobRoles';
 import Boreholes from './pages/Boreholes';
+import SiteTypes from './pages/SiteTypes';
 import Layout from './components/Layout';
 
 function PrivateRoute({ children }) {
@@ -207,6 +208,7 @@ function App() {
                                     <Route path="/admin/worker-job-roles" element={<WorkerJobRoles />} />
                                     <Route path="/admin/assets" element={<Assets />} />
                                     <Route path="/admin/asset-categories" element={<AssetCategories />} />
+                                    <Route path="/admin/site-types" element={<SiteTypes />} />
                                     <Route path="/admin/roles" element={<Roles />} />
                                     <Route path="/admin/users" element={<Users />} />
                                 </Routes>

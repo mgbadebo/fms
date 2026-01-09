@@ -161,6 +161,7 @@ export default function Layout({ children }) {
                 { name: 'Worker Job Roles', href: '/admin/worker-job-roles', icon: Briefcase },
                 { name: 'Assets', href: '/admin/assets', icon: Wrench },
                 { name: 'Asset Categories', href: '/admin/asset-categories', icon: FolderTree },
+                { name: 'Site Types', href: '/admin/site-types', icon: Building2 },
                 { name: 'Admin Zones', href: '/admin/admin-zones', icon: Layers },
                 { name: 'Roles', href: '/admin/roles', icon: Shield },
                 { name: 'Users', href: '/admin/users', icon: Users },
@@ -234,6 +235,7 @@ export default function Layout({ children }) {
             '/admin/worker-job-roles': { menu: 'admin', submenu: 'worker-job-roles' },
             '/admin/assets': { menu: 'admin', submenu: 'assets' },
             '/admin/asset-categories': { menu: 'admin', submenu: 'asset-categories' },
+            '/admin/site-types': { menu: 'admin', submenu: 'site-types' },
             '/admin/roles': { menu: 'admin', submenu: 'roles' },
             '/admin/users': { menu: 'admin', submenu: 'users' },
         };
