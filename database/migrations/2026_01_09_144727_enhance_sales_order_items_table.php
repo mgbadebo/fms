@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -31,8 +32,7 @@ return new class extends Migration
                 // We'll use a nullable foreign key - can link to either table
                 // Note: In practice, we may need to check which table the ID belongs to
                 $table->unsignedBigInteger('harvest_record_id')->nullable()->after('production_cycle_id');
-                // Add index but not foreign key constraint (since it can reference different tables)
-                $table->index('harvest_record_id');
+                // Index will be added below with other indexes to avoid duplication
             }
             
             // Rename product_description to product_name if product_id is used
@@ -62,10 +62,54 @@ return new class extends Migration
                 $table->string('quality_grade')->nullable()->after('line_total');
             }
             
-            // Add indexes
-            $table->index('farm_id');
-            $table->index('production_cycle_id');
-            $table->index('harvest_record_id');
+            // Add indexes (only if columns exist and indexes don't already exist)
+            // For SQLite, check if index exists using raw query
+            $driver = DB::getDriverName();
+            
+            if (Schema::hasColumn('sales_order_items', 'farm_id')) {
+                $indexExists = false;
+                if ($driver === 'sqlite') {
+                    $indexes = DB::select("SELECT name FROM sqlite_master WHERE type='index' AND name='sales_order_items_farm_id_index'");
+                    $indexExists = !empty($indexes);
+                }
+                if (!$indexExists) {
+                    try {
+                        $table->index('farm_id');
+                    } catch (\Exception $e) {
+                        // Index might already exist, continue
+                    }
+                }
+            }
+            
+            if (Schema::hasColumn('sales_order_items', 'production_cycle_id')) {
+                $indexExists = false;
+                if ($driver === 'sqlite') {
+                    $indexes = DB::select("SELECT name FROM sqlite_master WHERE type='index' AND name='sales_order_items_production_cycle_id_index'");
+                    $indexExists = !empty($indexes);
+                }
+                if (!$indexExists) {
+                    try {
+                        $table->index('production_cycle_id');
+                    } catch (\Exception $e) {
+                        // Index might already exist, continue
+                    }
+                }
+            }
+            
+            if (Schema::hasColumn('sales_order_items', 'harvest_record_id')) {
+                $indexExists = false;
+                if ($driver === 'sqlite') {
+                    $indexes = DB::select("SELECT name FROM sqlite_master WHERE type='index' AND name='sales_order_items_harvest_record_id_index'");
+                    $indexExists = !empty($indexes);
+                }
+                if (!$indexExists) {
+                    try {
+                        $table->index('harvest_record_id');
+                    } catch (\Exception $e) {
+                        // Index might already exist, continue
+                    }
+                }
+            }
         });
     }
 

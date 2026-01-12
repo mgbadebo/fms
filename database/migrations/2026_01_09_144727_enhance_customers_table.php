@@ -54,17 +54,40 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('customers', function (Blueprint $table) {
-            $table->dropColumn([
-                'customer_type',
-                'contact_name',
-                'address_line1',
-                'address_line2',
-                'city',
-                'state',
-                'country',
-                'is_active',
-                'created_by',
-            ]);
+            $columnsToDrop = [];
+            
+            if (Schema::hasColumn('customers', 'customer_type')) {
+                $columnsToDrop[] = 'customer_type';
+            }
+            if (Schema::hasColumn('customers', 'contact_name')) {
+                $columnsToDrop[] = 'contact_name';
+            }
+            if (Schema::hasColumn('customers', 'address_line1')) {
+                $columnsToDrop[] = 'address_line1';
+            }
+            if (Schema::hasColumn('customers', 'address_line2')) {
+                $columnsToDrop[] = 'address_line2';
+            }
+            if (Schema::hasColumn('customers', 'city')) {
+                $columnsToDrop[] = 'city';
+            }
+            if (Schema::hasColumn('customers', 'state')) {
+                $columnsToDrop[] = 'state';
+            }
+            if (Schema::hasColumn('customers', 'country')) {
+                $columnsToDrop[] = 'country';
+            }
+            if (Schema::hasColumn('customers', 'is_active')) {
+                $columnsToDrop[] = 'is_active';
+            }
+            if (Schema::hasColumn('customers', 'created_by')) {
+                $table->dropForeign(['created_by']);
+                $columnsToDrop[] = 'created_by';
+            }
+            
+            if (!empty($columnsToDrop)) {
+                $table->dropColumn($columnsToDrop);
+            }
         });
     }
 };
