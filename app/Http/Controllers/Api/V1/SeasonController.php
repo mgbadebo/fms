@@ -33,7 +33,7 @@ class SeasonController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             'status' => 'nullable|in:PLANNED,ACTIVE,COMPLETED,CANCELLED',
-            'description' => 'nullable|string',
+            'notes' => 'nullable|string',
         ]);
 
         $season = Season::create($validated);
@@ -55,8 +55,19 @@ class SeasonController extends Controller
             'name' => 'sometimes|string|max:255',
             'start_date' => 'sometimes|date',
             'end_date' => 'sometimes|date|after:start_date',
-            'status' => 'nullable|in:PLANNED,ACTIVE,COMPLETED,CANCELLED',
-            'description' => 'nullable|string',
+            'status' => [
+                'nullable',
+                'in:PLANNED,ACTIVE,COMPLETED,CANCELLED',
+                function ($attribute, $value, $fail) use ($season) {
+                    // Prevent cancelling or completing if there are active production cycles
+                    if (in_array($value, ['CANCELLED', 'COMPLETED'])) {
+                        if ($season->hasActiveProductionCycles()) {
+                            $fail('Cannot ' . strtolower($value) . ' a season that has active production cycles. Please complete or abandon all production cycles first.');
+                        }
+                    }
+                },
+            ],
+            'notes' => 'nullable|string',
         ]);
 
         $season->update($validated);

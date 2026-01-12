@@ -31,6 +31,8 @@ import {
     Wrench,
     FolderTree,
     Briefcase,
+    Calendar,
+    FileText,
 } from 'lucide-react';
 
 export default function Layout({ children }) {
@@ -49,6 +51,7 @@ export default function Layout({ children }) {
             bellPepper: path.startsWith('/bell-pepper'),
             tomatoes: path.startsWith('/tomatoes'),
             habaneros: path.startsWith('/habaneros'),
+            sales: path.startsWith('/sales'),
             livestock: false,
         };
     };
@@ -64,6 +67,7 @@ export default function Layout({ children }) {
             bellPepper: path.startsWith('/bell-pepper') ? true : prev.bellPepper,
             tomatoes: path.startsWith('/tomatoes') ? true : prev.tomatoes,
             habaneros: path.startsWith('/habaneros') ? true : prev.habaneros,
+            sales: path.startsWith('/sales') ? true : prev.sales,
         }));
     }, [location.pathname]);
 
@@ -95,10 +99,10 @@ export default function Layout({ children }) {
             key: 'bellPepper',
             icon: Sprout,
             items: [
-                { name: 'Production', href: '/bell-pepper-production', icon: Factory },
-                { name: 'Harvests', href: '/bell-pepper-harvests', icon: Package },
+                { name: 'Production Cycles', href: '/bell-pepper/production-cycles', icon: Calendar },
+                { name: 'Daily Logs', href: '/bell-pepper/daily-logs', icon: FileText },
+                { name: 'Harvest Records', href: '/bell-pepper/harvest-records', icon: Package },
                 { name: 'Inventory', href: '/bell-pepper-inventory', icon: Package },
-                { name: 'Sales', href: '/bell-pepper-sales', icon: ShoppingCart },
                 { name: 'KPIs', href: '/bell-pepper-kpis', icon: TrendingUp },
             ],
         },
@@ -109,7 +113,6 @@ export default function Layout({ children }) {
             items: [
                 { name: 'Production', href: '/habaneros-production', icon: Factory },
                 { name: 'Inventory', href: '/habaneros-inventory', icon: Package },
-                { name: 'Sales', href: '/habaneros-sales', icon: ShoppingCart },
                 { name: 'KPIs', href: '/habaneros-kpis', icon: TrendingUp },
             ],
         },
@@ -120,7 +123,6 @@ export default function Layout({ children }) {
             items: [
                 { name: 'Production', href: '/tomatoes-production', icon: Factory },
                 { name: 'Inventory', href: '/tomatoes-inventory', icon: Package },
-                { name: 'Sales', href: '/tomatoes-sales', icon: ShoppingCart },
                 { name: 'KPIs', href: '/tomatoes-kpis', icon: TrendingUp },
             ],
         },
@@ -131,17 +133,26 @@ export default function Layout({ children }) {
             items: [
                 { name: 'Production Batches', href: '/gari-production-batches', icon: Factory },
                 { name: 'Inventory', href: '/gari-inventory', icon: Package },
-                { name: 'Sales', href: '/gari-sales', icon: ShoppingCart },
                 { name: 'KPIs', href: '/gari-kpis', icon: TrendingUp },
                 { name: 'Waste & Losses', href: '/gari-waste-losses', icon: TrendingUp },
                 { name: 'Packaging Materials', href: '/packaging-materials', icon: Package },
             ],
         },
         {
+            name: 'Sales',
+            key: 'sales',
+            icon: ShoppingCart,
+            items: [
+                { name: 'Sales Orders', href: '/sales/orders', icon: ShoppingCart },
+                { name: 'Customers', href: '/sales/customers', icon: Users },
+                { name: 'Products', href: '/sales/products', icon: Package },
+                { name: 'KPIs', href: '/sales/kpis', icon: TrendingUp },
+            ],
+        },
+        {
             name: 'Reports',
             items: [
                 { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-                { name: 'Consolidated Sales', href: '/reports/consolidated-sales', icon: DollarSign },
                 { name: 'Consolidated Expenses', href: '/reports/consolidated-expenses', icon: BarChart3 },
                 { name: 'Staff Allocation', href: '/reports/staff-allocation', icon: Users },
             ],
@@ -162,6 +173,8 @@ export default function Layout({ children }) {
                 { name: 'Assets', href: '/admin/assets', icon: Wrench },
                 { name: 'Asset Categories', href: '/admin/asset-categories', icon: FolderTree },
                 { name: 'Site Types', href: '/admin/site-types', icon: Building2 },
+                { name: 'Activity Types', href: '/admin/activity-types', icon: Settings },
+                { name: 'Seasons', href: '/admin/seasons', icon: Calendar },
                 { name: 'Admin Zones', href: '/admin/admin-zones', icon: Layers },
                 { name: 'Roles', href: '/admin/roles', icon: Shield },
                 { name: 'Users', href: '/admin/users', icon: Users },
@@ -205,28 +218,28 @@ export default function Layout({ children }) {
             '/label-templates': { menu: 'admin', submenu: 'label-templates' },
             '/gari-production-batches': { menu: 'gari', submenu: 'production-batches' },
             '/gari-inventory': { menu: 'gari', submenu: 'inventory' },
-            '/gari-sales': { menu: 'gari', submenu: 'sales' },
             '/gari-kpis': { menu: 'gari', submenu: 'kpis' },
             '/gari-waste-losses': { menu: 'gari', submenu: 'waste-losses' },
             '/packaging-materials': { menu: 'gari', submenu: 'packaging-materials' },
             '/admin/boreholes': { menu: 'admin', submenu: 'boreholes' },
             '/admin/greenhouses': { menu: 'admin', submenu: 'greenhouses' },
-            '/bell-pepper-production': { menu: 'bell-pepper', submenu: 'production' },
-            '/bell-pepper-harvests': { menu: 'bell-pepper', submenu: 'harvests' },
+            '/bell-pepper/production-cycles': { menu: 'bell-pepper', submenu: 'production-cycles' },
+            '/bell-pepper/daily-logs': { menu: 'bell-pepper', submenu: 'daily-logs' },
+            '/bell-pepper/harvest-records': { menu: 'bell-pepper', submenu: 'harvest-records' },
             '/bell-pepper-inventory': { menu: 'bell-pepper', submenu: 'inventory' },
-            '/bell-pepper-sales': { menu: 'bell-pepper', submenu: 'sales' },
             '/bell-pepper-kpis': { menu: 'bell-pepper', submenu: 'kpis' },
             '/tomatoes-production': { menu: 'tomatoes', submenu: 'production' },
             '/tomatoes-inventory': { menu: 'tomatoes', submenu: 'inventory' },
-            '/tomatoes-sales': { menu: 'tomatoes', submenu: 'sales' },
             '/tomatoes-kpis': { menu: 'tomatoes', submenu: 'kpis' },
             '/habaneros-production': { menu: 'habaneros', submenu: 'production' },
             '/habaneros-inventory': { menu: 'habaneros', submenu: 'inventory' },
-            '/habaneros-sales': { menu: 'habaneros', submenu: 'sales' },
             '/habaneros-kpis': { menu: 'habaneros', submenu: 'kpis' },
-            '/reports/consolidated-sales': { menu: 'reports', submenu: 'consolidated-sales' },
             '/reports/consolidated-expenses': { menu: 'reports', submenu: 'consolidated-expenses' },
             '/reports/staff-allocation': { menu: 'reports', submenu: 'staff-allocation' },
+            '/sales/orders': { menu: 'sales', submenu: 'orders' },
+            '/sales/customers': { menu: 'sales', submenu: 'customers' },
+            '/sales/products': { menu: 'sales', submenu: 'products' },
+            '/sales/kpis': { menu: 'sales', submenu: 'kpis' },
             '/admin/admin-zones': { menu: 'admin', submenu: 'admin-zones' },
             '/admin/sites': { menu: 'admin', submenu: 'sites' },
             '/admin/farm-zones': { menu: 'admin', submenu: 'farm-zones' },
@@ -236,6 +249,8 @@ export default function Layout({ children }) {
             '/admin/assets': { menu: 'admin', submenu: 'assets' },
             '/admin/asset-categories': { menu: 'admin', submenu: 'asset-categories' },
             '/admin/site-types': { menu: 'admin', submenu: 'site-types' },
+            '/admin/activity-types': { menu: 'admin', submenu: 'activity-types' },
+            '/admin/seasons': { menu: 'admin', submenu: 'seasons' },
             '/admin/roles': { menu: 'admin', submenu: 'roles' },
             '/admin/users': { menu: 'admin', submenu: 'users' },
         };

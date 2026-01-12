@@ -31,7 +31,7 @@ class FactoryController extends Controller
     public function index(Request $request): JsonResponse
     {
         // Allow reading factories without admin permission (needed for production batch creation)
-        $query = Factory::with(['site', 'asset']);
+        $query = Factory::with(['site', 'asset.category']);
 
         if ($request->has('site_id')) {
             $query->where('site_id', $request->site_id);
@@ -107,10 +107,11 @@ class FactoryController extends Controller
 
         $factory = Factory::create($validated);
 
-        // Create asset only if track_as_asset is checked
+        // Create asset if track_as_asset is checked (MUST have asset record in Asset table)
         $trackAsAsset = $request->boolean('track_as_asset', false);
         
-        if ($trackAsAsset && empty($validated['asset_id'])) {
+        if ($trackAsAsset) {
+            // Always create a new asset record when tracking as asset
             // Extract asset data from validated array (keys prefixed with 'asset_')
             $assetData = [];
             foreach ($validated as $key => $value) {
@@ -121,6 +122,7 @@ class FactoryController extends Controller
                 }
             }
             
+            // Create asset record - this item MUST be in the Asset table
             $asset = $this->factoryAssetService->createAssetForFactory(
                 $site->farm_id, 
                 $validated['site_id'], 
@@ -129,9 +131,13 @@ class FactoryController extends Controller
             );
             $factory->asset_id = $asset->id;
             $factory->save();
+        } else {
+            // If track_as_asset is false, ensure no asset link
+            $factory->asset_id = null;
+            $factory->save();
         }
 
-        return response()->json(['data' => $factory->load('site', 'asset')], 201);
+        return response()->json(['data' => $factory->load('site', 'asset.category')], 201);
     }
 
     public function show(string $id): JsonResponse
@@ -141,7 +147,7 @@ class FactoryController extends Controller
             return $permissionCheck;
         }
 
-        $factory = Factory::with(['site', 'asset', 'staffAssignments.worker', 'gariProductionBatches'])->findOrFail($id);
+        $factory = Factory::with(['site', 'asset.category', 'staffAssignments.worker', 'gariProductionBatches'])->findOrFail($id);
         return response()->json(['data' => $factory]);
     }
 
@@ -211,7 +217,7 @@ class FactoryController extends Controller
             $factory->save();
         }
 
-        return response()->json(['data' => $factory->load('site', 'asset')]);
+        return response()->json(['data' => $factory->load('site', 'asset.category')]);
     }
 
     public function destroy(string $id): JsonResponse

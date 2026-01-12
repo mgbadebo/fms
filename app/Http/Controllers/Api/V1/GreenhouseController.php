@@ -22,7 +22,7 @@ class GreenhouseController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Greenhouse::with(['farm', 'site', 'creator', 'asset']);
+        $query = Greenhouse::with(['farm', 'site', 'creator', 'asset.category']);
 
         // Filter by site_id
         if ($request->has('site_id')) {
@@ -94,10 +94,11 @@ class GreenhouseController extends Controller
         // Create the greenhouse (code will be auto-generated in model boot if not provided)
         $greenhouse = Greenhouse::create($validated);
 
-        // Create asset only if track_as_asset is checked
+        // Create asset if track_as_asset is checked (MUST have asset record in Asset table)
         $trackAsAsset = $request->boolean('track_as_asset', false);
         
-        if ($trackAsAsset && empty($validated['asset_id'])) {
+        if ($trackAsAsset) {
+            // Always create a new asset record when tracking as asset
             // Extract asset data from validated array (keys prefixed with 'asset_')
             $assetData = [];
             foreach ($validated as $key => $value) {
@@ -116,6 +117,7 @@ class GreenhouseController extends Controller
                 $assetData['asset_gps_lng'] = $validated['longitude'];
             }
             
+            // Create asset record - this item MUST be in the Asset table
             $asset = $this->greenhouseAssetService->createAssetForGreenhouse(
                 $site->farm_id, 
                 $validated['site_id'], 
@@ -124,9 +126,13 @@ class GreenhouseController extends Controller
             );
             $greenhouse->asset_id = $asset->id;
             $greenhouse->save();
+        } else {
+            // If track_as_asset is false, ensure no asset link
+            $greenhouse->asset_id = null;
+            $greenhouse->save();
         }
 
-        return (new GreenhouseResource($greenhouse->load('farm', 'site', 'creator', 'asset')))
+        return (new GreenhouseResource($greenhouse->load('farm', 'site', 'creator', 'asset.category')))
             ->response()
             ->setStatusCode(201);
     }
@@ -136,7 +142,7 @@ class GreenhouseController extends Controller
      */
     public function show(string $id): JsonResponse
     {
-        $greenhouse = Greenhouse::with(['farm', 'site', 'creator', 'asset', 'bellPepperCycles', 'boreholes'])
+        $greenhouse = Greenhouse::with(['farm', 'site', 'creator', 'asset.category', 'bellPepperCycles', 'boreholes'])
             ->findOrFail($id);
         
         return (new GreenhouseResource($greenhouse))->response();
@@ -168,7 +174,43 @@ class GreenhouseController extends Controller
         
         $greenhouse->update($validated);
 
-        return (new GreenhouseResource($greenhouse->load('farm', 'site', 'creator', 'asset')))->response();
+        // Handle asset creation/update if track_as_asset is checked
+        $trackAsAsset = $request->boolean('track_as_asset', false);
+        
+        if ($trackAsAsset && !$greenhouse->asset_id) {
+            // Create new asset if tracking as asset but no asset exists
+            $site = $greenhouse->site;
+            $assetData = [];
+            foreach ($validated as $key => $value) {
+                if (str_starts_with($key, 'asset_')) {
+                    $assetKey = substr($key, 6);
+                    $assetData[$assetKey] = $value;
+                }
+            }
+            
+            // Include GPS coordinates from greenhouse if available
+            if (isset($validated['latitude'])) {
+                $assetData['asset_gps_lat'] = $validated['latitude'];
+            }
+            if (isset($validated['longitude'])) {
+                $assetData['asset_gps_lng'] = $validated['longitude'];
+            }
+            
+            $asset = $this->greenhouseAssetService->createAssetForGreenhouse(
+                $site->farm_id,
+                $greenhouse->site_id,
+                $greenhouse->name,
+                $assetData
+            );
+            $greenhouse->asset_id = $asset->id;
+            $greenhouse->save();
+        } elseif (!$trackAsAsset && $greenhouse->asset_id) {
+            // Remove asset link if untracking
+            $greenhouse->asset_id = null;
+            $greenhouse->save();
+        }
+
+        return (new GreenhouseResource($greenhouse->load('farm', 'site', 'creator', 'asset.category')))->response();
     }
 
     /**

@@ -86,6 +86,24 @@ export default function GreenhouseManagement() {
         }
     };
 
+    const fetchAssetCategories = async () => {
+        try {
+            const response = await api.get('/api/v1/asset-categories?per_page=1000');
+            let categoriesArray = [];
+            if (response.data) {
+                if (Array.isArray(response.data)) {
+                    categoriesArray = response.data;
+                } else if (response.data.data && Array.isArray(response.data.data)) {
+                    categoriesArray = response.data.data;
+                }
+            }
+            setAssetCategories(categoriesArray);
+        } catch (error) {
+            console.error('Error fetching asset categories:', error);
+            setAssetCategories([]);
+        }
+    };
+
     const handleModalOpen = () => {
         setShowModal(true);
         setEditingGreenhouse(null);
@@ -124,6 +142,10 @@ export default function GreenhouseManagement() {
         setEditingGreenhouse(greenhouse);
         const hasAsset = !!greenhouse.asset_id;
         setTrackAsAsset(hasAsset);
+        // Ensure asset categories are loaded if not already loaded
+        if (assetCategories.length === 0) {
+            fetchAssetCategories();
+        }
         setFormData({
             site_id: greenhouse.site?.id || '',
             name: greenhouse.name || '',
@@ -535,13 +557,13 @@ export default function GreenhouseManagement() {
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Asset Category</label>
                                         <select
-                                            value={formData.asset_category_id}
+                                            value={formData.asset_category_id ? String(formData.asset_category_id) : ''}
                                             onChange={(e) => setFormData({ ...formData, asset_category_id: e.target.value })}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
                                         >
                                             <option value="">Select category</option>
                                             {assetCategories.map((cat) => (
-                                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                <option key={cat.id} value={String(cat.id)}>{cat.name}</option>
                                             ))}
                                         </select>
                                     </div>

@@ -133,6 +133,10 @@ export default function Sites() {
     const handleModalOpen = () => {
         setEditingSite(null);
         setTrackAsAsset(false);
+        // Wait for site types to load if not already loaded
+        if (siteTypes.length === 0) {
+            fetchSiteTypes();
+        }
         const defaultType = siteTypes.length > 0 ? siteTypes[0].code : '';
         setFormData({
             farm_id: '',
@@ -169,6 +173,10 @@ export default function Sites() {
         setEditingSite(site);
         const hasAsset = !!site.asset_id;
         setTrackAsAsset(hasAsset);
+        // Ensure asset categories are loaded if not already loaded
+        if (assetCategories.length === 0) {
+            fetchAssetCategories();
+        }
         setFormData({
             farm_id: site.farm_id || '',
             name: site.name || '',
@@ -459,13 +467,13 @@ export default function Sites() {
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Asset Category</label>
                                             <select
-                                                value={formData.asset_category_id}
+                                                value={formData.asset_category_id ? String(formData.asset_category_id) : ''}
                                                 onChange={(e) => setFormData({ ...formData, asset_category_id: e.target.value })}
                                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500"
                                             >
                                                 <option value="">Select category</option>
                                                 {assetCategories.map((cat) => (
-                                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                    <option key={cat.id} value={String(cat.id)}>{cat.name}</option>
                                                 ))}
                                             </select>
                                         </div>

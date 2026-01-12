@@ -46,4 +46,16 @@ class Season extends Model
     {
         return $this->hasMany(Budget::class);
     }
+
+    public function productionCycles()
+    {
+        return $this->hasMany(GreenhouseProductionCycle::class);
+    }
+
+    public function hasActiveProductionCycles(): bool
+    {
+        return $this->productionCycles()
+            ->whereIn('cycle_status', ['PLANNED', 'ACTIVE', 'HARVESTING'])
+            ->exists();
+    }
 }

@@ -11,12 +11,21 @@ class Customer extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'farm_id',
         'name',
+        'customer_type',
+        'contact_name',
         'contact',
         'address',
+        'address_line1',
+        'address_line2',
+        'city',
+        'state',
+        'country',
         'email',
         'phone',
+        'is_active',
+        'notes',
+        'created_by',
         'metadata',
     ];
 
@@ -24,16 +33,17 @@ class Customer extends Model
     {
         return [
             'metadata' => 'array',
+            'is_active' => 'boolean',
         ];
-    }
-
-    public function farm()
-    {
-        return $this->belongsTo(Farm::class);
     }
 
     public function salesOrders()
     {
         return $this->hasMany(SalesOrder::class);
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

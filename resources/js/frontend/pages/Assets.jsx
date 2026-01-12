@@ -49,8 +49,16 @@ export default function Assets() {
     const fetchCategories = async () => {
         try {
             const response = await api.get('/api/v1/asset-categories?per_page=1000');
-            const data = response.data?.data || (Array.isArray(response.data) ? response.data : []);
-            setCategories(Array.isArray(data) ? data : []);
+            // Handle paginated response structure
+            let categoriesArray = [];
+            if (response.data) {
+                if (response.data.data && Array.isArray(response.data.data)) {
+                    categoriesArray = response.data.data;
+                } else if (Array.isArray(response.data)) {
+                    categoriesArray = response.data;
+                }
+            }
+            setCategories(categoriesArray);
         } catch (error) {
             console.error('Error fetching categories:', error);
             setCategories([]);
@@ -224,16 +232,18 @@ export default function Assets() {
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                                     <select
-                                        value={formData.asset_category_id}
+                                        value={formData.asset_category_id ? String(formData.asset_category_id) : ''}
                                         onChange={(e) => setFormData({ ...formData, asset_category_id: e.target.value })}
                                         className="w-full border border-gray-300 rounded-lg px-3 py-2"
                                     >
                                         <option value="">Select Category</option>
-                                        {categories
-                                            .filter(c => c.farm_id === (formData.farm_id || editingAsset?.farm_id))
-                                            .map((category) => (
-                                                <option key={category.id} value={category.id}>{category.name}</option>
-                                            ))}
+                                        {categories.length === 0 ? (
+                                            <option value="" disabled>No categories available</option>
+                                        ) : (
+                                            categories.map((category) => (
+                                                <option key={category.id} value={String(category.id)}>{category.name}</option>
+                                            ))
+                                        )}
                                     </select>
                                 </div>
                                 <div>

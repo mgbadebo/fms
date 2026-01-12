@@ -196,6 +196,11 @@ class Greenhouse extends Model
         return $this->hasMany(BellPepperCycle::class);
     }
 
+    public function productionCycles()
+    {
+        return $this->hasMany(GreenhouseProductionCycle::class);
+    }
+
     public function boreholes()
     {
         return $this->belongsToMany(Borehole::class, 'greenhouse_borehole');

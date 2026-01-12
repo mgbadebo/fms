@@ -22,6 +22,10 @@ composer install --no-dev --optimize-autoloader
 echo "🗄️  Running database migrations..."
 php artisan migrate --force
 
+# Seed site types (if not already seeded)
+echo "🌱 Seeding site types..."
+php artisan db:seed --class=SiteTypeSeeder --force || echo "⚠️  Site types may already be seeded"
+
 # Clear and cache configuration
 echo "⚙️  Caching configuration..."
 php artisan config:cache

@@ -36,6 +36,14 @@ export default function Boreholes() {
         fetchData();
     }, []);
 
+    // Debug: Log when assetCategories changes
+    useEffect(() => {
+        // Visual indicator in page title when categories load
+        if (assetCategories.length > 0) {
+            document.title = `Boreholes (${assetCategories.length} categories loaded)`;
+        }
+    }, [assetCategories]);
+
     const fetchData = async () => {
         try {
             const [boreholesRes, sitesRes, categoriesRes] = await Promise.all([
@@ -45,7 +53,12 @@ export default function Boreholes() {
             ]);
 
             // Parse boreholes response
+            console.log('Boreholes API response:', boreholesRes.data);
             const boreholesData = boreholesRes.data?.data || (Array.isArray(boreholesRes.data) ? boreholesRes.data : []);
+            console.log('Parsed boreholes data:', boreholesData);
+            if (boreholesData.length > 0) {
+                console.log('First borehole sample:', JSON.stringify(boreholesData[0], null, 2));
+            }
             setBoreholes(Array.isArray(boreholesData) ? boreholesData : []);
 
             // Parse sites response - handle paginated response structure
@@ -61,15 +74,18 @@ export default function Boreholes() {
             }
             setSites(sitesArray);
             
-            // Parse asset categories response
+            // Parse asset categories response - handle paginated response
             let categoriesArray = [];
             if (categoriesRes.data) {
-                if (Array.isArray(categoriesRes.data)) {
-                    categoriesArray = categoriesRes.data;
-                } else if (categoriesRes.data.data && Array.isArray(categoriesRes.data.data)) {
+                // Laravel pagination returns: { data: [...], current_page: 1, per_page: 20, ... }
+                if (categoriesRes.data.data && Array.isArray(categoriesRes.data.data)) {
                     categoriesArray = categoriesRes.data.data;
+                } else if (Array.isArray(categoriesRes.data)) {
+                    // Direct array response (unlikely with pagination, but handle it)
+                    categoriesArray = categoriesRes.data;
                 }
             }
+            
             setAssetCategories(categoriesArray);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -80,6 +96,32 @@ export default function Boreholes() {
             setAssetCategories([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchAssetCategories = async () => {
+        try {
+            const response = await api.get('/api/v1/asset-categories?per_page=1000');
+            
+            // Handle paginated response structure
+            let categoriesArray = [];
+            if (response.data) {
+                // Laravel pagination: { data: [...], current_page: 1, per_page: 1000, ... }
+                if (response.data.data && Array.isArray(response.data.data)) {
+                    categoriesArray = response.data.data;
+                } else if (Array.isArray(response.data)) {
+                    // Direct array (shouldn't happen with pagination, but handle it)
+                    categoriesArray = response.data;
+                }
+            }
+            
+            setAssetCategories(categoriesArray);
+            return categoriesArray;
+        } catch (error) {
+            const errorMsg = error.response?.data?.message || error.message || 'Unknown error';
+            alert('Failed to load asset categories: ' + errorMsg + '\n\nCheck if the API endpoint /api/v1/asset-categories is accessible.');
+            setAssetCategories([]);
+            return [];
         }
     };
 
@@ -109,17 +151,25 @@ export default function Boreholes() {
         setShowModal(true);
     };
 
-    const handleEdit = (borehole) => {
+    const handleEdit = async (borehole) => {
         setEditingBorehole(borehole);
         const hasAsset = !!borehole.asset_id;
         setTrackAsAsset(hasAsset);
+        
+        // Ensure asset categories are loaded if not already loaded
+        if (assetCategories.length === 0) {
+            await fetchAssetCategories();
+        }
+        
+        const categoryId = borehole.asset?.asset_category_id || '';
+        
         setFormData({
             site_id: borehole.site?.id || '',
             name: borehole.name || '',
             status: borehole.status || 'ACTIVE',
             notes: borehole.notes || '',
             track_as_asset: hasAsset,
-            asset_category_id: borehole.asset?.asset_category_id || '',
+            asset_category_id: categoryId,
             asset_description: borehole.asset?.description || '',
             asset_acquisition_type: borehole.asset?.acquisition_type || '',
             asset_purchase_date: borehole.asset?.purchase_date ? new Date(borehole.asset.purchase_date).toISOString().slice(0, 10) : '',
@@ -342,15 +392,46 @@ export default function Boreholes() {
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Asset Category</label>
                                             <select
-                                                value={formData.asset_category_id}
+                                                value={formData.asset_category_id ? String(formData.asset_category_id) : ''}
                                                 onChange={(e) => setFormData({ ...formData, asset_category_id: e.target.value })}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
                                             >
-                                                <option value="">Select category</option>
-                                                {assetCategories.map((cat) => (
-                                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                                ))}
+                                                <option value="">
+                                                    {assetCategories.length === 0 
+                                                        ? '⚠️ No categories loaded (0)' 
+                                                        : `Select category (${assetCategories.length} available)`
+                                                    }
+                                                </option>
+                                                {assetCategories.length === 0 ? (
+                                                    <option value="" disabled>Click "Retry" button below to load categories</option>
+                                                ) : (
+                                                    assetCategories.map((cat) => (
+                                                        <option key={cat.id} value={String(cat.id)}>{cat.name}</option>
+                                                    ))
+                                                )}
                                             </select>
+                                            {assetCategories.length === 0 && (
+                                                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                                                    <p className="text-xs text-yellow-800 mb-2">⚠️ Asset categories not loaded.</p>
+                                                    <button
+                                                        type="button"
+                                                        onClick={async () => {
+                                                            const result = await fetchAssetCategories();
+                                                            if (result.length === 0) {
+                                                                alert('Still no categories. Check if API endpoint /api/v1/asset-categories is working.');
+                                                            }
+                                                        }}
+                                                        className="text-xs bg-yellow-600 text-white px-3 py-1 rounded hover:bg-yellow-700"
+                                                    >
+                                                        Retry Loading Categories
+                                                    </button>
+                                                </div>
+                                            )}
+                                            {assetCategories.length > 0 && formData.asset_category_id && (
+                                                <p className="text-xs text-green-600 mt-1">
+                                                    ✓ Selected category ID: {formData.asset_category_id}
+                                                </p>
+                                            )}
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Acquisition Type</label>

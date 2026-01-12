@@ -22,7 +22,7 @@ class BoreholeController extends Controller
     public function index(Request $request): JsonResponse
     {
         Gate::authorize('viewAny', Borehole::class);
-        $query = Borehole::with(['farm', 'site', 'asset'])
+        $query = Borehole::with(['farm', 'site', 'asset.category'])
             ->when($request->site_id, fn($q) => $q->where('site_id', $request->site_id))
             ->when($request->status, fn($q) => $q->where('status', $request->status))
             ->when($request->search, function($q) use ($request) {
@@ -55,10 +55,11 @@ class BoreholeController extends Controller
 
         $borehole = Borehole::create($validated);
 
-        // Create asset only if track_as_asset is checked
+        // Create asset if track_as_asset is checked (MUST have asset record in Asset table)
         $trackAsAsset = $request->boolean('track_as_asset', false);
         
-        if ($trackAsAsset && empty($validated['asset_id'])) {
+        if ($trackAsAsset) {
+            // Always create a new asset record when tracking as asset
             // Extract asset data from validated array (keys prefixed with 'asset_')
             $assetData = [];
             foreach ($validated as $key => $value) {
@@ -80,6 +81,7 @@ class BoreholeController extends Controller
                 $assetData['asset_location_text'] = $validated['location_description'];
             }
             
+            // Create asset record - this item MUST be in the Asset table
             $asset = $this->boreholeAssetService->createAssetForBorehole(
                 $farmId, 
                 $validated['site_id'], 
@@ -88,14 +90,18 @@ class BoreholeController extends Controller
             );
             $borehole->asset_id = $asset->id;
             $borehole->save();
+        } else {
+            // If track_as_asset is false, ensure no asset link
+            $borehole->asset_id = null;
+            $borehole->save();
         }
 
-        return (new BoreholeResource($borehole->load('farm','site','asset')))->response()->setStatusCode(201);
+        return (new BoreholeResource($borehole->load('farm','site','asset.category')))->response()->setStatusCode(201);
     }
 
     public function show(string $id): JsonResponse
     {
-        $borehole = Borehole::with(['farm', 'site', 'asset'])->findOrFail($id);
+        $borehole = Borehole::with(['farm', 'site', 'asset.category'])->findOrFail($id);
         Gate::authorize('view', $borehole);
         return (new BoreholeResource($borehole))->response();
     }
@@ -115,7 +121,45 @@ class BoreholeController extends Controller
 
         $borehole->update($validated);
 
-        return (new BoreholeResource($borehole->load('farm','site')))->response();
+        // Handle asset creation/update if track_as_asset is checked
+        $trackAsAsset = $request->boolean('track_as_asset', false);
+        
+        if ($trackAsAsset && !$borehole->asset_id) {
+            // Create new asset if tracking as asset but no asset exists
+            $assetData = [];
+            foreach ($validated as $key => $value) {
+                if (str_starts_with($key, 'asset_')) {
+                    $assetKey = substr($key, 6);
+                    $assetData[$assetKey] = $value;
+                }
+            }
+            
+            // Include GPS coordinates from borehole if available
+            if (isset($validated['gps_lat'])) {
+                $assetData['asset_gps_lat'] = $validated['gps_lat'];
+            }
+            if (isset($validated['gps_lng'])) {
+                $assetData['asset_gps_lng'] = $validated['gps_lng'];
+            }
+            if (isset($validated['location_description'])) {
+                $assetData['asset_location_text'] = $validated['location_description'];
+            }
+            
+            $asset = $this->boreholeAssetService->createAssetForBorehole(
+                $borehole->farm_id,
+                $borehole->site_id,
+                $borehole->name,
+                $assetData
+            );
+            $borehole->asset_id = $asset->id;
+            $borehole->save();
+        } elseif (!$trackAsAsset && $borehole->asset_id) {
+            // Remove asset link if untracking
+            $borehole->asset_id = null;
+            $borehole->save();
+        }
+
+        return (new BoreholeResource($borehole->load('farm','site','asset.category')))->response();
     }
 
     public function destroy(string $id): JsonResponse

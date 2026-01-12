@@ -15,6 +15,8 @@ use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Database\Seeders\SiteTypeSeeder;
 use Database\Seeders\MenuPermissionSeeder;
+use Database\Seeders\AssetCategorySeeder;
+use Database\Seeders\ActivityTypeSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -132,6 +134,12 @@ class DatabaseSeeder extends Seeder
 
         // Seed site types (should be early as other features may depend on it)
         $this->call(SiteTypeSeeder::class);
+        
+        // Seed asset categories (needed for asset tracking)
+        $this->call(AssetCategorySeeder::class);
+        
+        // Seed activity types (needed for production cycle daily logs)
+        $this->call(ActivityTypeSeeder::class);
         
         // Seed menu permissions (must be after roles are created)
         $this->call(MenuPermissionSeeder::class);

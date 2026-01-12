@@ -23,6 +23,17 @@ use App\Http\Controllers\Api\V1\BellPepperCycleController;
 use App\Http\Controllers\Api\V1\BellPepperCycleCostController;
 use App\Http\Controllers\Api\V1\BellPepperHarvestController;
 use App\Http\Controllers\Api\V1\BellPepperSaleController;
+use App\Http\Controllers\Api\V1\ProductionCycleController;
+use App\Http\Controllers\Api\V1\ActivityTypeController;
+use App\Http\Controllers\Api\V1\DailyLogController;
+use App\Http\Controllers\Api\V1\CustomerController;
+use App\Http\Controllers\Api\V1\SalesOrderController;
+use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\KpiController;
+use App\Http\Controllers\Api\V1\HarvestRecordController;
+use App\Http\Controllers\Api\V1\HarvestCrateController;
+use App\Http\Controllers\Api\V1\HarvestTotalsController;
 use App\Http\Controllers\Api\V1\BoreholeController;
 use App\Http\Controllers\Api\V1\AdminZoneController;
 use App\Http\Controllers\Api\V1\RoleController;
@@ -154,6 +165,52 @@ Route::prefix('v1')->group(function () {
         
         // Bell Pepper Sales
         Route::apiResource('bell-pepper-sales', BellPepperSaleController::class);
+        
+        // Greenhouse Production Cycles (New Structured Workflow)
+        Route::apiResource('production-cycles', ProductionCycleController::class);
+        Route::post('production-cycles/{id}/start', [ProductionCycleController::class, 'start']);
+        Route::post('production-cycles/{id}/complete', [ProductionCycleController::class, 'complete']);
+        
+        // Activity Types (farm-scoped)
+        Route::apiResource('activity-types', ActivityTypeController::class);
+        
+        // Daily Logs
+        Route::get('production-cycles/{production_cycle_id}/daily-logs', [DailyLogController::class, 'index']);
+        Route::post('production-cycles/{production_cycle_id}/daily-logs', [DailyLogController::class, 'store']);
+        Route::get('greenhouses/{greenhouse_id}/daily-logs', [DailyLogController::class, 'indexByGreenhouse']);
+        Route::get('daily-logs/{id}', [DailyLogController::class, 'show']);
+        Route::patch('daily-logs/{id}', [DailyLogController::class, 'update']);
+        Route::post('daily-logs/{id}/submit', [DailyLogController::class, 'submit']);
+        
+        // Sales Module
+        Route::apiResource('customers', CustomerController::class);
+        Route::apiResource('products', ProductController::class);
+        Route::apiResource('sales-orders', SalesOrderController::class);
+        Route::post('sales-orders/{id}/confirm', [SalesOrderController::class, 'confirm']);
+        Route::post('sales-orders/{id}/dispatch', [SalesOrderController::class, 'dispatch']);
+        Route::post('sales-orders/{id}/invoice', [SalesOrderController::class, 'invoice']);
+        Route::post('sales-orders/{id}/cancel', [SalesOrderController::class, 'cancel']);
+        Route::get('sales-orders/{sales_order_id}/payments', [PaymentController::class, 'index']);
+        Route::post('sales-orders/{sales_order_id}/payments', [PaymentController::class, 'store']);
+        
+        // KPI Reporting
+        Route::get('kpis/sales-summary', [KpiController::class, 'salesSummary']);
+        Route::get('kpis/production-profitability', [KpiController::class, 'productionProfitability']);
+        Route::get('kpis/operations-compliance', [KpiController::class, 'operationsCompliance']);
+        
+        // Harvest Records
+        Route::apiResource('harvest-records', HarvestRecordController::class);
+        Route::post('harvest-records/{id}/submit', [HarvestRecordController::class, 'submit']);
+        Route::post('harvest-records/{id}/approve', [HarvestRecordController::class, 'approve']);
+        
+        // Harvest Crates
+        Route::get('harvest-records/{harvest_record_id}/crates', [HarvestCrateController::class, 'index']);
+        Route::post('harvest-records/{harvest_record_id}/crates', [HarvestCrateController::class, 'store']);
+        Route::patch('harvest-crates/{id}', [HarvestCrateController::class, 'update']);
+        Route::delete('harvest-crates/{id}', [HarvestCrateController::class, 'destroy']);
+        
+        // Harvest Totals
+        Route::get('harvest-totals/daily', [HarvestTotalsController::class, 'daily']);
         
         // Admin Settings - Zones
         Route::apiResource('admin-zones', AdminZoneController::class);

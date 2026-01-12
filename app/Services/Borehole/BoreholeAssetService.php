@@ -25,8 +25,8 @@ class BoreholeAssetService
     public function createAssetForBorehole(int $farmId, int $siteId, string $boreholeName, array $assetData = []): Asset
     {
         // Resolve BOREHOLE category (global or per farm)
-        // Use provided category_id if available, otherwise default to BOREHOLE
-        $categoryId = $assetData['asset_category_id'] ?? null;
+        // Use provided category_id if available (prefix removed by controller), otherwise default to BOREHOLE
+        $categoryId = $assetData['category_id'] ?? null;
         
         if ($categoryId) {
             $category = AssetCategory::find($categoryId);

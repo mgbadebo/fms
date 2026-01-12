@@ -35,6 +35,15 @@ import AssetCategories from './pages/AssetCategories';
 import WorkerJobRoles from './pages/WorkerJobRoles';
 import Boreholes from './pages/Boreholes';
 import SiteTypes from './pages/SiteTypes';
+import ProductionCycles from './pages/ProductionCycles';
+import DailyLogs from './pages/DailyLogs';
+import ActivityTypes from './pages/ActivityTypes';
+import SalesOrders from './pages/SalesOrders';
+import Customers from './pages/Customers';
+import Products from './pages/Products';
+import SalesKPIs from './pages/SalesKPIs';
+import HarvestRecords from './pages/HarvestRecords';
+import Seasons from './pages/Seasons';
 import Layout from './components/Layout';
 
 function PrivateRoute({ children }) {
@@ -173,27 +182,32 @@ function App() {
                                     <Route path="/gari-waste-losses" element={<GariWasteLosses />} />
                                     
                                     {/* Bell Pepper Routes */}
+                                    <Route path="/bell-pepper/production-cycles" element={<ProductionCycles />} />
+                                    <Route path="/bell-pepper/daily-logs" element={<DailyLogs />} />
+                                    <Route path="/bell-pepper/harvest-records" element={<HarvestRecords />} />
                                     <Route path="/bell-pepper-production" element={<BellPepperProduction />} />
                                     <Route path="/bell-pepper-cycles/:id" element={<BellPepperCycleDetail />} />
                                     <Route path="/bell-pepper-harvests" element={<BellPepperHarvests />} />
                                     <Route path="/bell-pepper-inventory" element={<CropPlaceholder cropName="Bell Pepper" basePath="bell-pepper" />} />
-                                    <Route path="/bell-pepper-sales" element={<CropPlaceholder cropName="Bell Pepper" basePath="bell-pepper" />} />
                                     <Route path="/bell-pepper-kpis" element={<CropPlaceholder cropName="Bell Pepper" basePath="bell-pepper" />} />
                                     
                                     {/* Tomatoes Routes */}
                                     <Route path="/tomatoes-production" element={<CropPlaceholder cropName="Tomatoes" basePath="tomatoes" />} />
                                     <Route path="/tomatoes-inventory" element={<CropPlaceholder cropName="Tomatoes" basePath="tomatoes" />} />
-                                    <Route path="/tomatoes-sales" element={<CropPlaceholder cropName="Tomatoes" basePath="tomatoes" />} />
                                     <Route path="/tomatoes-kpis" element={<CropPlaceholder cropName="Tomatoes" basePath="tomatoes" />} />
                                     
                                     {/* Habaneros Routes */}
                                     <Route path="/habaneros-production" element={<CropPlaceholder cropName="Habaneros" basePath="habaneros" />} />
                                     <Route path="/habaneros-inventory" element={<CropPlaceholder cropName="Habaneros" basePath="habaneros" />} />
-                                    <Route path="/habaneros-sales" element={<CropPlaceholder cropName="Habaneros" basePath="habaneros" />} />
                                     <Route path="/habaneros-kpis" element={<CropPlaceholder cropName="Habaneros" basePath="habaneros" />} />
                                     
+                                    {/* Sales Module Routes */}
+                                    <Route path="/sales/orders" element={<SalesOrders />} />
+                                    <Route path="/sales/customers" element={<Customers />} />
+                                    <Route path="/sales/products" element={<Products />} />
+                                    <Route path="/sales/kpis" element={<SalesKPIs />} />
+                                    
                                     {/* Consolidated Reports */}
-                                    <Route path="/reports/consolidated-sales" element={<ConsolidatedSales />} />
                                     <Route path="/reports/consolidated-expenses" element={<ConsolidatedExpenses />} />
                                     <Route path="/reports/staff-allocation" element={<StaffAllocation />} />
                                     
@@ -209,6 +223,8 @@ function App() {
                                     <Route path="/admin/assets" element={<Assets />} />
                                     <Route path="/admin/asset-categories" element={<AssetCategories />} />
                                     <Route path="/admin/site-types" element={<SiteTypes />} />
+                                    <Route path="/admin/activity-types" element={<ActivityTypes />} />
+                                    <Route path="/admin/seasons" element={<Seasons />} />
                                     <Route path="/admin/roles" element={<Roles />} />
                                     <Route path="/admin/users" element={<Users />} />
                                 </Routes>

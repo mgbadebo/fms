@@ -21,6 +21,7 @@ class Farm extends Model
         'default_currency',
         'default_unit_system',
         'default_timezone',
+        'daily_log_cutoff_time',
         'accounting_method',
         'status',
         'created_by',
@@ -41,6 +42,7 @@ class Farm extends Model
             'meta' => 'array',
             'is_active' => 'boolean',
             'total_area' => 'decimal:2',
+            // daily_log_cutoff_time is stored as time, no cast needed
         ];
     }
     

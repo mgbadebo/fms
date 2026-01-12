@@ -34,7 +34,7 @@ class SiteController extends Controller
         }
 
         // Admin can see all sites; others can only see sites from their farms
-        $query = Site::with(['farm', 'asset']);
+        $query = Site::with(['farm', 'asset.category']);
 
         if (!$user->hasRole('ADMIN')) {
             // Filter sites by user's farm membership
@@ -130,8 +130,9 @@ class SiteController extends Controller
 
         $site = Site::create($validated);
 
-        // Create asset only if track_as_asset is checked
-        if ($trackAsAsset && empty($validated['asset_id'])) {
+        // Create asset if track_as_asset is checked (MUST have asset record in Asset table)
+        if ($trackAsAsset) {
+            // Always create a new asset record when tracking as asset
             // Extract asset data from validated array (keys prefixed with 'asset_')
             $assetData = [];
             foreach ($validated as $key => $value) {
@@ -153,6 +154,7 @@ class SiteController extends Controller
                 $assetData['asset_location_text'] = $validated['address'];
             }
             
+            // Create asset record - this item MUST be in the Asset table
             $asset = $this->siteAssetService->createAssetForSite(
                 $validated['farm_id'] ?? $site->farm_id, 
                 $validated['name'],
@@ -160,9 +162,13 @@ class SiteController extends Controller
             );
             $site->asset_id = $asset->id;
             $site->save();
+        } else {
+            // If track_as_asset is false, ensure no asset link
+            $site->asset_id = null;
+            $site->save();
         }
 
-        return response()->json(['data' => $site->load('farm', 'asset')], 201);
+        return response()->json(['data' => $site->load('farm', 'asset.category')], 201);
     }
 
     public function show(string $id): JsonResponse
@@ -172,7 +178,7 @@ class SiteController extends Controller
             return $permissionCheck;
         }
 
-        $site = Site::with(['farm', 'asset', 'farmZones', 'greenhouses', 'factories'])->findOrFail($id);
+        $site = Site::with(['farm', 'asset.category', 'farmZones', 'greenhouses', 'factories'])->findOrFail($id);
         return response()->json(['data' => $site]);
     }
 
@@ -185,7 +191,9 @@ class SiteController extends Controller
 
         $site = Site::findOrFail($id);
 
-        $validated = $request->validate([
+        $trackAsAsset = $request->boolean('track_as_asset', false);
+        
+        $rules = [
             'name' => 'sometimes|string|max:255',
             'code' => 'sometimes|string|unique:sites,code,' . $id,
             'type' => 'sometimes|exists:site_types,code',
@@ -198,11 +206,68 @@ class SiteController extends Controller
             'area_unit' => 'nullable|string',
             'metadata' => 'nullable|array',
             'is_active' => 'boolean',
-        ]);
+            'track_as_asset' => 'boolean',
+        ];
+        
+        // If tracking as asset, add asset field validation
+        if ($trackAsAsset) {
+            $rules = array_merge($rules, [
+                'asset_category_id' => 'nullable|exists:asset_categories,id',
+                'asset_description' => 'nullable|string',
+                'asset_acquisition_type' => 'nullable|in:PURCHASED,LEASED,RENTED,DONATED',
+                'asset_purchase_date' => 'nullable|date',
+                'asset_purchase_cost' => 'nullable|numeric|min:0',
+                'asset_currency' => 'nullable|string|max:3',
+                'asset_supplier_name' => 'nullable|string|max:255',
+                'asset_serial_number' => 'nullable|string|max:255',
+                'asset_model' => 'nullable|string|max:255',
+                'asset_manufacturer' => 'nullable|string|max:255',
+                'asset_year_of_make' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),
+                'asset_warranty_expiry' => 'nullable|date',
+                'asset_is_trackable' => 'boolean',
+            ]);
+        }
+        
+        $validated = $request->validate($rules);
 
         $site->update($validated);
 
-        return response()->json(['data' => $site->load('farm', 'asset')]);
+        // Handle asset creation/update if track_as_asset is checked
+        if ($trackAsAsset && !$site->asset_id) {
+            // Create new asset if tracking as asset but no asset exists
+            $assetData = [];
+            foreach ($validated as $key => $value) {
+                if (str_starts_with($key, 'asset_')) {
+                    $assetKey = substr($key, 6);
+                    $assetData[$assetKey] = $value;
+                }
+            }
+            
+            // Include GPS coordinates from site if available
+            if (isset($validated['latitude'])) {
+                $assetData['asset_gps_lat'] = $validated['latitude'];
+            }
+            if (isset($validated['longitude'])) {
+                $assetData['asset_gps_lng'] = $validated['longitude'];
+            }
+            if (isset($validated['address'])) {
+                $assetData['asset_location_text'] = $validated['address'];
+            }
+            
+            $asset = $this->siteAssetService->createAssetForSite(
+                $site->farm_id,
+                $site->name,
+                $assetData
+            );
+            $site->asset_id = $asset->id;
+            $site->save();
+        } elseif (!$trackAsAsset && $site->asset_id) {
+            // Remove asset link if untracking
+            $site->asset_id = null;
+            $site->save();
+        }
+
+        return response()->json(['data' => $site->load('farm', 'asset.category')]);
     }
 
     public function destroy(string $id): JsonResponse

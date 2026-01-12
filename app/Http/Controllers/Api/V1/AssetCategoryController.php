@@ -17,7 +17,9 @@ class AssetCategoryController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $categories = $query->paginate(20);
+        // Respect per_page parameter, default to 20
+        $perPage = $request->input('per_page', 20);
+        $categories = $query->paginate($perPage);
         return response()->json($categories);
     }
 

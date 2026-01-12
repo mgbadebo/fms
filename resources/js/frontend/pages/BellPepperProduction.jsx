@@ -9,11 +9,19 @@ export default function BellPepperProduction() {
     const [greenhouses, setGreenhouses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    // Calculate default end date (6 months from today)
+    const getDefaultEndDate = () => {
+        const today = new Date();
+        const endDate = new Date(today);
+        endDate.setMonth(endDate.getMonth() + 6);
+        return endDate.toISOString().slice(0, 10);
+    };
+
     const [formData, setFormData] = useState({
         farm_id: '',
         greenhouse_id: '',
         start_date: new Date().toISOString().slice(0, 10),
-        expected_end_date: '',
+        expected_end_date: getDefaultEndDate(),
         expected_yield_kg: '',
         notes: '',
     });
@@ -57,11 +65,18 @@ export default function BellPepperProduction() {
     };
 
     const handleModalOpen = () => {
+        const today = new Date();
+        const todayStr = today.toISOString().slice(0, 10);
+        // Calculate default end date (6 months from today)
+        const defaultEndDate = new Date(today);
+        defaultEndDate.setMonth(defaultEndDate.getMonth() + 6);
+        const defaultEndDateStr = defaultEndDate.toISOString().slice(0, 10);
+        
         setFormData({
             farm_id: '',
             greenhouse_id: '',
-            start_date: new Date().toISOString().slice(0, 10),
-            expected_end_date: '',
+            start_date: todayStr,
+            expected_end_date: defaultEndDateStr,
             expected_yield_kg: '',
             notes: '',
         });
@@ -242,10 +257,18 @@ export default function BellPepperProduction() {
                                         value={formData.start_date}
                                         onChange={(e) => {
                                             const startDate = e.target.value;
+                                            let expectedEndDate = '';
+                                            if (startDate) {
+                                                const start = new Date(startDate);
+                                                // Add exactly 6 months
+                                                const end = new Date(start);
+                                                end.setMonth(end.getMonth() + 6);
+                                                expectedEndDate = end.toISOString().slice(0, 10);
+                                            }
                                             setFormData({ 
                                                 ...formData, 
                                                 start_date: startDate,
-                                                expected_end_date: startDate ? new Date(new Date(startDate).getTime() + 180 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10) : ''
+                                                expected_end_date: expectedEndDate
                                             });
                                         }}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
