@@ -19,7 +19,7 @@ class HarvestCrateController extends Controller
         $record = ProductionCycleHarvestRecord::findOrFail($harvestRecordId);
         Gate::authorize('view', $record);
         
-        $crates = ProductionCycleHarvestCrate::with('weigher')
+        $crates = ProductionCycleHarvestCrate::with(['weigher', 'storageLocation'])
             ->where('harvest_record_id', $record->id)
             ->orderBy('crate_number')
             ->get();
@@ -54,6 +54,7 @@ class HarvestCrateController extends Controller
                 'weight_kg' => $weightPerCrate,
                 'weighed_by' => $weighedBy,
                 'weighed_at' => $validated['weighed_at'] ?? now(),
+                'storage_location_id' => $validated['storage_location_id'] ?? null,
                 'label_code' => $validated['label_code'] ?? null,
                 'notes' => $validated['notes'] ?? null,
             ];
@@ -66,12 +67,12 @@ class HarvestCrateController extends Controller
         
         // Return the first crate (or all if only one)
         if (count($createdCrates) === 1) {
-            return (new HarvestCrateResource($createdCrates[0]->load('weigher')))->response()->setStatusCode(201);
+            return (new HarvestCrateResource($createdCrates[0]->load(['weigher', 'storageLocation'])))->response()->setStatusCode(201);
         }
         
         // Return collection if multiple crates created
         $loadedCrates = collect($createdCrates)->map(function ($crate) {
-            return $crate->load('weigher');
+            return $crate->load(['weigher', 'storageLocation']);
         });
         return HarvestCrateResource::collection($loadedCrates)->response()->setStatusCode(201);
     }
@@ -85,7 +86,7 @@ class HarvestCrateController extends Controller
         
         // Totals will be recalculated automatically via model boot
         
-        return (new HarvestCrateResource($crate->load('weigher')))->response();
+        return (new HarvestCrateResource($crate->load(['weigher', 'storageLocation'])))->response();
     }
 
     public function destroy(string $id): JsonResponse

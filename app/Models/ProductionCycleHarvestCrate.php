@@ -13,6 +13,7 @@ class ProductionCycleHarvestCrate extends Model
     protected $fillable = [
         'farm_id',
         'harvest_record_id',
+        'storage_location_id',
         'grade',
         'crate_number',
         'weight_kg',
@@ -90,5 +91,10 @@ class ProductionCycleHarvestCrate extends Model
     public function weigher()
     {
         return $this->belongsTo(User::class, 'weighed_by');
+    }
+
+    public function storageLocation()
+    {
+        return $this->belongsTo(InventoryLocation::class, 'storage_location_id');
     }
 }

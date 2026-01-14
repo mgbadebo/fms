@@ -21,8 +21,10 @@ export default function HarvestRecords() {
         grade: 'A',
         crate_count: 1,
         total_weight_kg: '',
+        storage_location_id: '',
         notes: '',
     });
+    const [storageLocations, setStorageLocations] = useState([]);
     const [filters, setFilters] = useState({
         production_cycle_id: '',
         greenhouse_id: '',
@@ -33,6 +35,7 @@ export default function HarvestRecords() {
 
     useEffect(() => {
         fetchData();
+        fetchStorageLocations();
     }, []);
 
     useEffect(() => {
@@ -83,6 +86,16 @@ export default function HarvestRecords() {
         } catch (error) {
             console.error('Error fetching records:', error);
             alert('Error loading records: ' + (error.response?.data?.message || error.message));
+        }
+    };
+
+    const fetchStorageLocations = async () => {
+        try {
+            const response = await api.get('/api/v1/inventory-locations');
+            const locationsData = response.data?.data || response.data || [];
+            setStorageLocations(Array.isArray(locationsData) ? locationsData : []);
+        } catch (error) {
+            console.error('Error fetching storage locations:', error);
         }
     };
 
@@ -166,6 +179,7 @@ export default function HarvestRecords() {
             grade: 'A',
             crate_count: 1,
             total_weight_kg: '',
+            storage_location_id: '',
             notes: '',
         });
         setShowCrateModal(true);
@@ -179,6 +193,7 @@ export default function HarvestRecords() {
                 grade: crateData.grade,
                 crate_count: parseInt(crateData.crate_count) || 1,
                 total_weight_kg: parseFloat(crateData.total_weight_kg) || 0,
+                storage_location_id: crateData.storage_location_id || null,
                 notes: crateData.notes || '',
             };
             
@@ -782,6 +797,27 @@ export default function HarvestRecords() {
                                         Weight per crate: {(parseFloat(crateData.total_weight_kg) / parseInt(crateData.crate_count)).toFixed(2)} kg
                                     </p>
                                 )}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Storage Location <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    required
+                                    value={crateData.storage_location_id}
+                                    onChange={(e) => setCrateData({ ...crateData, storage_location_id: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                >
+                                    <option value="">Select Storage Location</option>
+                                    {storageLocations.map((location) => (
+                                        <option key={location.id} value={location.id}>
+                                            {location.name} ({location.type})
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="mt-1 text-xs text-amber-600">
+                                    <strong>Required:</strong> All harvested items must be allocated to a storage location if not immediately sold.
+                                </p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">

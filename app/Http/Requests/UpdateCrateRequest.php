@@ -46,6 +46,7 @@ class UpdateCrateRequest extends FormRequest
             'grade' => 'sometimes|in:A,B,C',
             'weight_kg' => 'sometimes|numeric|min:0.01',
             'weighed_at' => 'nullable|date',
+            'storage_location_id' => 'required|exists:inventory_locations,id',
             'label_code' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'crate_number' => 'prohibited', // Cannot change

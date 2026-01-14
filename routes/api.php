@@ -34,6 +34,8 @@ use App\Http\Controllers\Api\V1\KpiController;
 use App\Http\Controllers\Api\V1\HarvestRecordController;
 use App\Http\Controllers\Api\V1\HarvestCrateController;
 use App\Http\Controllers\Api\V1\HarvestTotalsController;
+use App\Http\Controllers\Api\V1\BellPepperInventoryController;
+use App\Http\Controllers\Api\V1\InventoryLocationController;
 use App\Http\Controllers\Api\V1\BoreholeController;
 use App\Http\Controllers\Api\V1\AdminZoneController;
 use App\Http\Controllers\Api\V1\RoleController;
@@ -211,6 +213,12 @@ Route::prefix('v1')->group(function () {
         
         // Harvest Totals
         Route::get('harvest-totals/daily', [HarvestTotalsController::class, 'daily']);
+        
+        // Bell Pepper Inventory
+        Route::get('bell-pepper-inventory', [BellPepperInventoryController::class, 'index']);
+        
+        // Inventory Locations
+        Route::get('inventory-locations', [InventoryLocationController::class, 'index']);
         
         // Admin Settings - Zones
         Route::apiResource('admin-zones', AdminZoneController::class);

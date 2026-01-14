@@ -44,6 +44,7 @@ import Products from './pages/Products';
 import SalesKPIs from './pages/SalesKPIs';
 import HarvestRecords from './pages/HarvestRecords';
 import Seasons from './pages/Seasons';
+import BellPepperInventory from './pages/BellPepperInventory';
 import Layout from './components/Layout';
 
 function PrivateRoute({ children }) {
@@ -188,7 +189,7 @@ function App() {
                                     <Route path="/bell-pepper-production" element={<BellPepperProduction />} />
                                     <Route path="/bell-pepper-cycles/:id" element={<BellPepperCycleDetail />} />
                                     <Route path="/bell-pepper-harvests" element={<BellPepperHarvests />} />
-                                    <Route path="/bell-pepper-inventory" element={<CropPlaceholder cropName="Bell Pepper" basePath="bell-pepper" />} />
+                                    <Route path="/bell-pepper-inventory" element={<BellPepperInventory />} />
                                     <Route path="/bell-pepper-kpis" element={<CropPlaceholder cropName="Bell Pepper" basePath="bell-pepper" />} />
                                     
                                     {/* Tomatoes Routes */}

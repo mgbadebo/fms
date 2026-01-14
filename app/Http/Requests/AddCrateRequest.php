@@ -48,6 +48,7 @@ class AddCrateRequest extends FormRequest
             'total_weight_kg' => 'required_without:weight_kg|nullable|numeric|min:0.01',
             'weight_kg' => 'required_without:total_weight_kg|nullable|numeric|min:0.01', // For backward compatibility
             'weighed_at' => 'nullable|date',
+            'storage_location_id' => 'required|exists:inventory_locations,id',
             'label_code' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'crate_number' => 'prohibited', // Server assigns

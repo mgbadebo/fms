@@ -20,6 +20,12 @@ class HarvestCrateResource extends JsonResource
                 'id' => $this->weigher->id,
                 'name' => $this->weigher->name,
             ] : null,
+            'storage_location_id' => $this->storage_location_id,
+            'storage_location' => $this->storageLocation ? [
+                'id' => $this->storageLocation->id,
+                'name' => $this->storageLocation->name,
+                'type' => $this->storageLocation->type,
+            ] : null,
             'label_code' => $this->label_code,
             'notes' => $this->notes,
             'created_at' => $this->created_at?->toISOString(),
